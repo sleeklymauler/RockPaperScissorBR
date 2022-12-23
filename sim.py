@@ -49,7 +49,7 @@ class Game(arcade.Window):
 
         # create all of the sprites
         # SPRITES ARE 120 X 120 PIXELS
-        for i in range(33):
+        for i in range(50):
             # rock sprites
             rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed")
             # set position on screen to be random, adjust so the entire sprite is on the screen
@@ -74,39 +74,77 @@ class Game(arcade.Window):
             # add to sprite list
             self.scissorList.append(scissor)
 
+    # iterates through rock list and removes all rocks that collide with paper
+    def rockPaperCollision(Game):
+        for rock in Game.rockList:
+            for collision in arcade.check_for_collision_with_list(rock, Game.paperList):
+                # in case rock was removed in an earlier collision
+                if (rock in Game.rockList):
+                    Game.collisionList.append((rock.center_x, rock.center_y))
+                    Game.rockList.remove(rock)
+    
+    # iterates through scissor list and removes all scissors that collide with rock
+    def scissorRockCollision(Game):
+        for scissor in Game.scissorList:
+            for collision in arcade.check_for_collision_with_list(scissor, Game.rockList):
+                # in case scissor was removed in an earlier collision
+                if (scissor in Game.scissorList):
+                    Game.collisionList.append((scissor.center_x, scissor.center_y))
+                    Game.scissorList.remove(scissor)
+
+    # iterates through paper list and removes all paper that collides with scissors
+    def paperScissorCollision(Game):
+        for paper in Game.paperList:
+            for collision in arcade.check_for_collision_with_list(paper, Game.scissorList):
+                # in case paper was removed in an earlier collision
+                if (paper in Game.paperList):
+                    Game.collisionList.append((paper.center_x, paper.center_y))
+                    Game.paperList.remove(paper)
+    
+    
     def fixInitialCollisions(self):
         # fix initial collisions that might occur
         # rock and paper collisions
         for rock in self.rockList:
             for collision in arcade.check_for_collision_with_list(rock, self.paperList):
-                Game.collisionList.append((rock.center_x, rock.center_y))
-                self.rockList.remove(rock)
-
+                # in case rock was removed in an earlier collision
+                if (rock in self.rockList):
+                    Game.collisionList.append((rock.center_x, rock.center_y))
+                    self.rockList.remove(rock)
+                
         # rock and scissor collisions
         for scissor in self.scissorList:
             for collision in arcade.check_for_collision_with_list(scissor, self.rockList):
-                Game.collisionList.append((scissor.center_x, scissor.center_y))
-                self.scissorList.remove(scissor)
+                # in case scissor was removed in an earlier collision
+                if (scissor in self.scissorList):
+                    Game.collisionList.append((scissor.center_x, scissor.center_y))
+                    self.scissorList.remove(scissor)
+                
                 
         # paper and scissor collisions
         for paper in self.paperList:
             for collision in arcade.check_for_collision_with_list(paper, self.scissorList):
-                Game.collisionList.append((paper.center_x, paper.center_y))
-                self.paperList.remove(paper)
+                # in case paper was removed in an earlier collision
+                if (paper in self.paperList):
+                    Game.collisionList.append((paper.center_x, paper.center_y))
+                    self.paperList.remove(paper)
         
     # draws things on screen 60 times a second
     def on_draw(self):
         # ready to draw
         arcade.start_render()
-        # delay removing initial collisions for 3 seconds
-        if Game.counter < 180:
+        # delay removing initial collisions for 2 seconds
+        if Game.counter < 120:
             # draw all of the sprites
             self.rockList.draw()
             self.paperList.draw()
             self.scissorList.draw()
             Game.counter += 1
         else:
-            Game.fixInitialCollisions(self)
+            # call this only once
+            if (Game.counter == 120):
+                Game.fixInitialCollisions(self)
+                Game.counter += 1
             # draw all of the sprites
             self.rockList.draw()
             self.paperList.draw()
