@@ -1,5 +1,3 @@
-# TODO: fix bug where "sprite not in spritelist" occurs sometimes in fixInitialCollisions() function
-
 import arcade
 import random
 import time
@@ -74,6 +72,7 @@ class Game(arcade.Window):
             # add to sprite list
             self.scissorList.append(scissor)
 
+    # the following 3 functions prevent overlap of different weapons when the game initializes
     # iterates through rock list and removes all rocks that collide with paper
     def rockPaperCollision(self):
         for paper in self.paperList:
@@ -81,7 +80,6 @@ class Game(arcade.Window):
                 if arcade.check_for_collision(paper, rock):
                     Game.collisionList.append((rock.center_x, rock.center_y))
                     self.rockList.remove(rock)
-    
     # iterates through scissor list and removes all scissors that collide with rock
     def scissorRockCollision(self):
         for rock in self.rockList:
@@ -89,7 +87,6 @@ class Game(arcade.Window):
                 if arcade.check_for_collision(rock, scissor):
                     Game.collisionList.append((scissor.center_x, scissor.center_y))
                     self.scissorList.remove(scissor)
-
     # iterates through paper list and removes all paper that collides with scissors
     def paperScissorCollision(self):
         for scissor in self.scissorList:
@@ -98,6 +95,7 @@ class Game(arcade.Window):
                     Game.collisionList.append((paper.center_x, paper.center_y))
                     self.paperList.remove(paper)
     
+    # calls the above 3 functions in a random order to fix weapon overlap at the start of the game
     def fixInitialCollisions(self):
         # randomize order to fix collisions to keep all sides balanced
         # potential collision orders are:
@@ -135,7 +133,6 @@ class Game(arcade.Window):
             Game.scissorRockCollision(self)
         else:
             print("Error! Couldn't determine order of initial collisions")
-        
         
     # draws things on screen 60 times a second
     def on_draw(self):
