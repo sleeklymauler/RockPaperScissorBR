@@ -13,9 +13,12 @@ class Weapon(arcade.Sprite):
 
 # extend arcade's built in Window class
 class Game(arcade.Window):
-    # static variables to store screen's native width and height
+    # static variables
+    # storing height and width of screen
     screenWidth = arcade.get_display_size()[0]
     screenHeight = arcade.get_display_size()[1]
+    # storing collision coordinates (remove this later?)
+    collisionList = []
     
     # constructor
     def __init__(self):
@@ -64,6 +67,14 @@ class Game(arcade.Window):
             # add to sprite list
             self.scissorList.append(scissor)
 
+        # check for initial collisions
+        # iterate over every rock
+        for rock in self.rockList:
+            # check if rock intersects with any of the papers
+            for list in arcade.check_for_collision_with_list(rock, self.paperList):
+                # add coordinates of rock to list
+                Game.collisionList.append((rock.center_x, rock.center_y))
+
     # draws things on screen 60 times a second
     def on_draw(self):
         # ready to start drawing
@@ -73,6 +84,9 @@ class Game(arcade.Window):
         self.rockList.draw()
         self.paperList.draw()
         self.scissorList.draw()
+
+        for coords in Game.collisionList:
+            arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
 
     # updates values 60 times a second
     def update(self, delta_time):
