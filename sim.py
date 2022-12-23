@@ -75,59 +75,33 @@ class Game(arcade.Window):
             self.scissorList.append(scissor)
 
     # iterates through rock list and removes all rocks that collide with paper
-    def rockPaperCollision(Game):
-        for rock in Game.rockList:
-            for collision in arcade.check_for_collision_with_list(rock, Game.paperList):
-                # in case rock was removed in an earlier collision
-                if (rock in Game.rockList):
-                    Game.collisionList.append((rock.center_x, rock.center_y))
-                    Game.rockList.remove(rock)
-    
-    # iterates through scissor list and removes all scissors that collide with rock
-    def scissorRockCollision(Game):
-        for scissor in Game.scissorList:
-            for collision in arcade.check_for_collision_with_list(scissor, Game.rockList):
-                # in case scissor was removed in an earlier collision
-                if (scissor in Game.scissorList):
-                    Game.collisionList.append((scissor.center_x, scissor.center_y))
-                    Game.scissorList.remove(scissor)
-
-    # iterates through paper list and removes all paper that collides with scissors
-    def paperScissorCollision(Game):
-        for paper in Game.paperList:
-            for collision in arcade.check_for_collision_with_list(paper, Game.scissorList):
-                # in case paper was removed in an earlier collision
-                if (paper in Game.paperList):
-                    Game.collisionList.append((paper.center_x, paper.center_y))
-                    Game.paperList.remove(paper)
-    
-    
-    def fixInitialCollisions(self):
-        # fix initial collisions that might occur
-        # rock and paper collisions
-        for rock in self.rockList:
-            for collision in arcade.check_for_collision_with_list(rock, self.paperList):
-                # in case rock was removed in an earlier collision
-                if (rock in self.rockList):
+    def rockPaperCollision(self):
+        for paper in self.paperList:
+            for rock in self.rockList:
+                if arcade.check_for_collision(paper, rock):
                     Game.collisionList.append((rock.center_x, rock.center_y))
                     self.rockList.remove(rock)
-                
-        # rock and scissor collisions
-        for scissor in self.scissorList:
-            for collision in arcade.check_for_collision_with_list(scissor, self.rockList):
-                # in case scissor was removed in an earlier collision
-                if (scissor in self.scissorList):
+    
+    # iterates through scissor list and removes all scissors that collide with rock
+    def scissorRockCollision(self):
+        for rock in self.rockList:
+            for scissor in self.scissorList:
+                if arcade.check_for_collision(rock, scissor):
                     Game.collisionList.append((scissor.center_x, scissor.center_y))
                     self.scissorList.remove(scissor)
-                
-                
-        # paper and scissor collisions
-        for paper in self.paperList:
-            for collision in arcade.check_for_collision_with_list(paper, self.scissorList):
-                # in case paper was removed in an earlier collision
-                if (paper in self.paperList):
+
+    # iterates through paper list and removes all paper that collides with scissors
+    def paperScissorCollision(self):
+        for scissor in self.scissorList:
+            for paper in self.paperList:
+                if arcade.check_for_collision(scissor, paper):
                     Game.collisionList.append((paper.center_x, paper.center_y))
                     self.paperList.remove(paper)
+    
+    def fixInitialCollisions(self):
+        Game.rockPaperCollision(self)
+        Game.scissorRockCollision(self)
+        Game.paperScissorCollision(self)
         
     # draws things on screen 60 times a second
     def on_draw(self):
