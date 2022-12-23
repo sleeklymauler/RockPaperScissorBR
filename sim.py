@@ -99,9 +99,43 @@ class Game(arcade.Window):
                     self.paperList.remove(paper)
     
     def fixInitialCollisions(self):
-        Game.rockPaperCollision(self)
-        Game.scissorRockCollision(self)
-        Game.paperScissorCollision(self)
+        # randomize order to fix collisions to keep all sides balanced
+        # potential collision orders are:
+        # 1) rock-paper, scissor-rock, paper-scissor
+        # 2) rock-paper, paper-scissor, scissor-rock
+        # 3) scissor-rock, rock-paper, paper-scissor
+        # 4) scissor-rock, paper-scissor, rock-paper
+        # 5) paper-scissor, scissor-rock, rock-paper
+        # 6) paper-scissor, rock-paper, scissor-rock
+
+        order = random.randint(1, 6)
+        if order == 1:
+            Game.rockPaperCollision(self)
+            Game.scissorRockCollision(self)
+            Game.paperScissorCollision(self)
+        elif order == 2:
+            Game.rockPaperCollision(self)
+            Game.paperScissorCollision(self)
+            Game.scissorRockCollision(self)
+        elif order == 3:
+            Game.scissorRockCollision(self)
+            Game.rockPaperCollision(self)
+            Game.paperScissorCollision(self)
+        elif order == 4:
+            Game.scissorRockCollision(self)
+            Game.paperScissorCollision(self)
+            Game.rockPaperCollision(self)
+        elif order == 5:
+            Game.paperScissorCollision(self)
+            Game.scissorRockCollision(self)
+            Game.rockPaperCollision(self)
+        elif order == 6:
+            Game.paperScissorCollision(self)
+            Game.rockPaperCollision(self)
+            Game.scissorRockCollision(self)
+        else:
+            print("Error! Couldn't determine order of initial collisions")
+        
         
     # draws things on screen 60 times a second
     def on_draw(self):
