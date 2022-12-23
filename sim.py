@@ -42,7 +42,7 @@ class Game(arcade.Window):
         for i in range(33):
             # rock sprites
             rock = Weapon("Sprites/rock.png", 0.25)
-            # set position on screen to be random
+            # set position on screen to be random, adjust so the entire sprite is on the screen
             rock.center_x = random.randrange(60, Game.screenWidth - 60)
             rock.center_y = random.randrange(60, Game.screenHeight - 60)
             # add to sprite list
@@ -79,7 +79,7 @@ class Game(arcade.Window):
         pass
 
 def main():
-    # create game window with with width, height, and name
+    # create game window
     window = Game()
     # run game setup
     window.setup()
