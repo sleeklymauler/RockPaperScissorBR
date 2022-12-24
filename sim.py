@@ -36,7 +36,7 @@ class Game(arcade.Window):
     # constructor
     def __init__(self):
         # call the Window class's constructor
-        super().__init__(Game.screenWidth, Game.screenHeight, "Example")
+        super().__init__(Game.screenWidth, Game.screenHeight, "Example", update_rate = 0.0416)
 
         # declare the sprite lists
         self.rockList = None
@@ -216,12 +216,12 @@ class Game(arcade.Window):
                 # calculate x and y components of vector from rock to paper and then reverse its direction
                 deltaX = -1 * (nearestLose.center_x - weapon.center_x)
                 deltaY = -1 * (nearestLose.center_y - weapon.center_y)
-            # calculate magnitude of this vector
             # don't let weapons go off screen
             if (weapon.center_x + deltaX >= (Game.screenWidth - 20) or weapon.center_x + deltaX <= 10):
                 deltaX = 0
             if (weapon.center_y + deltaY >= (Game.screenHeight - 20) or weapon.center_y + deltaY <= 50):
                 deltaY = 0
+            # calculate magnitude of this vector
             deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
             # normalize the x and y components so their new magnitude is 1
             if deltaMagnitude != 0:
@@ -231,9 +231,9 @@ class Game(arcade.Window):
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
             # move the weapon toward the weapon that can be beat or away from the weapon
-            # that can't be beat at a rate of 2 units of distance per second
-            weapon.center_x += 2 * normalizedDeltaX
-            weapon.center_y += 2 * normalizedDeltaY
+            # that can't be beat at a rate of 2.5 units of distance per second
+            weapon.center_x += 2.5 * normalizedDeltaX
+            weapon.center_y += 2.5 * normalizedDeltaY
         
     # draws things on screen 60 times a second
     def on_draw(self):
@@ -248,7 +248,7 @@ class Game(arcade.Window):
         #     arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
 
     # updates values 60 times a second
-    def update(self, delta_time):
+    def on_update(self, delta_time):
         Game.fixInitialCollisions(self)
         Game.moveWeapons(self)
         
