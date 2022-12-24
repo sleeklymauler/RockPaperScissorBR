@@ -217,6 +217,11 @@ class Game(arcade.Window):
                 deltaX = -1 * (nearestLose.center_x - weapon.center_x)
                 deltaY = -1 * (nearestLose.center_y - weapon.center_y)
             # calculate magnitude of this vector
+            # don't let weapons go off screen
+            if (weapon.center_x + deltaX >= (Game.screenWidth - 20) or weapon.center_x + deltaX <= 10):
+                deltaX = 0
+            if (weapon.center_y + deltaY >= (Game.screenHeight - 20) or weapon.center_y + deltaY <= 50):
+                deltaY = 0
             deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
             # normalize the x and y components so their new magnitude is 1
             if deltaMagnitude != 0:
