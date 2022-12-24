@@ -11,7 +11,9 @@ class Weapon(arcade.Sprite):
         super().__init__(filename = filename, scale = scale, hit_box_algorithm = hit_box_algorithm)
     
     # called when the Game class updates
-    def update(self, weaponList):
+    def update(self, deltaX, deltaY):
+        # self.center_x += deltaX
+        # self.center_y += deltaY
         pass
 
 # extend arcade's built in Window class
@@ -152,55 +154,99 @@ class Game(arcade.Window):
             Game.scissorRockCollision(self)
         else:
             print("Error! Couldn't determine order of initial collisions")
+
+    # the following 3 functions handle moving weapons toward other weapons
+    # moving rocks toward scissors
+    def moveRocks(self):
+        for rock in self.rockList:
+            # get nearest scissor
+            nearestScissorTuple = arcade.get_closest_sprite(rock, self.scissorList)
+            # all scissors have been destroyed
+            if (nearestScissorTuple == None):
+                return
+            nearestScissor = nearestScissorTuple[0]
+            # calculate x and y components of vector from rock to scissor
+            deltaX = nearestScissor.center_x - rock.center_x
+            deltaY = nearestScissor.center_y - rock.center_y
+            # calculate magnitude of this vector
+            deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
+            # normalize the x and y components so their new magnitude is 1
+            if deltaMagnitude != 0:
+                normalizedDeltaX = deltaX / deltaMagnitude
+                normalizedDeltaY = deltaY / deltaMagnitude
+            else:
+                normalizedDeltaX = 0
+                normalizedDeltaY = 0
+            # move the rock toward the scissor at a rate of 1 unit of distance per second
+            rock.center_x += normalizedDeltaX
+            rock.center_y += normalizedDeltaY
+    # moving papers towards rocks
+    def movePapers(self):
+        for paper in self.paperList:
+            # get nearest rock
+            nearestRockTuple = arcade.get_closest_sprite(paper, self.rockList)
+            # all rocks have been destroyed
+            if nearestRockTuple == None:
+                return
+            nearestRock = nearestRockTuple[0]
+            # calculate x and y components of vector from paper to rock
+            deltaX = nearestRock.center_x - paper.center_x
+            deltaY = nearestRock.center_y - paper.center_y
+            # calculate magnitude of this vector
+            deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
+            # normalize the x and y components so their new magnitude is 1
+            if deltaMagnitude != 0:
+                normalizedDeltaX = deltaX / deltaMagnitude
+                normalizedDeltaY = deltaY / deltaMagnitude
+            else:
+                normalizedDeltaX = 0
+                normalizedDeltaY = 0
+            # move the paper toward the rock at a rate of 1 unit of distance per second
+            paper.center_x += normalizedDeltaX
+            paper.center_y += normalizedDeltaY
+    # moving scissors towards papers
+    def moveScissors(self):
+        for scissor in self.scissorList:
+            # get nearest paper
+            nearestPaperTuple = arcade.get_closest_sprite(scissor, self.paperList)
+            # all papers have been destroyed
+            if nearestPaperTuple == None:
+                return
+            nearestPaper = nearestPaperTuple[0]
+            # calculate x and y components of vector from paper to rock
+            deltaX = nearestPaper.center_x - scissor.center_x
+            deltaY = nearestPaper.center_y - scissor.center_y
+            # calculate magnitude of this vector
+            deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
+            # normalize the x and y components so their new magnitude is 1
+            if deltaMagnitude != 0:
+                normalizedDeltaX = deltaX / deltaMagnitude
+                normalizedDeltaY = deltaY / deltaMagnitude
+            else:
+                normalizedDeltaX = 0
+                normalizedDeltaY = 0
+            # move the paper toward the rock at a rate of 1 unit of distance per second
+            scissor.center_x += normalizedDeltaX
+            scissor.center_y += normalizedDeltaY
         
     # draws things on screen 60 times a second
     def on_draw(self):
         # ready to draw
         arcade.start_render()
-        # delay removing initial collisions for 2 seconds
-        if Game.counter < 120:
-            # draw all of the sprites
-            self.rockList.draw()
-            self.paperList.draw()
-            self.scissorList.draw()
-            Game.counter += 1
-        else:
-            # call this only once
-            if (Game.counter == 120):
-                Game.fixInitialCollisions(self)
-                Game.counter += 1
-            # draw all of the sprites
-            self.rockList.draw()
-            self.paperList.draw()
-            self.scissorList.draw()
-            # circle initial collisions
-            for coords in Game.collisionList:
-                arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
+        # draw all of the sprites
+        self.rockList.draw()
+        self.paperList.draw()
+        self.scissorList.draw()
+        # circle initial collisions
+        # for coords in Game.collisionList:
+        #     arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
 
     # updates values 60 times a second
     def update(self, delta_time):
-        # delay game start for 2 seconds
-        if Game.counter < 120:
-            pass
-        else:
-            for rock in self.rockList:
-                # get nearest scissor
-                nearestScissor = arcade.get_closest_sprite(rock, self.scissorList)[0]
-                # calculate x and y components of vector from rock to scissor
-                deltaX = nearestScissor.center_x - rock.center_x
-                deltaY = nearestScissor.center_y - rock.center_y
-                # calculate magnitude of this vector
-                deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
-                # normalize the x and y components so their new magnitude is 1
-                if deltaMagnitude != 0:
-                    normalizedDeltaX = deltaX / deltaMagnitude
-                    normalizedDeltaY = deltaY / deltaMagnitude
-                else:
-                    normalizedDeltaX = 0
-                    normalizedDeltaY = 0
-                # move the rock toward the scissor at a rate of 1 unit of distance per second
-                # rock.center_x += normalizedDeltaX
-                # rock.center_y += normalizedDeltaY
+        Game.fixInitialCollisions(self)
+        Game.moveRocks(self)
+        Game.movePapers(self)
+        Game.moveScissors(self)
         
 def main():
     # create game window
