@@ -1,6 +1,7 @@
 import arcade
 import random
 import time
+import math
 
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
@@ -155,12 +156,37 @@ class Game(arcade.Window):
             self.paperList.draw()
             self.scissorList.draw()
             # circle initial collisions
-            for coords in Game.collisionList:
-                arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
+            # for coords in Game.collisionList:
+            #     arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
 
     # updates values 60 times a second
     def update(self, delta_time):
-        pass
+        # delay game start for 2 seconds
+        if Game.counter < 120:
+            # draw all of the sprites
+            self.rockList.draw()
+            self.paperList.draw()
+            self.scissorList.draw()
+            # Game.counter is already being updated in the on_draw() function
+        else:
+            for rock in self.rockList:
+                # get nearest scissor
+                nearestScissor = arcade.get_closest_sprite(rock, self.scissorList)[0]
+                # calculate x and y components of vector from rock to scissor
+                deltaX = nearestScissor.center_x - rock.center_x
+                deltaY = nearestScissor.center_y - rock.center_y
+                # calculate magnitude of this vector
+                deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
+                # normalize the x and y components so their new magnitude is 1
+                if deltaMagnitude != 0:
+                    normalizedDeltaX = deltaX / deltaMagnitude
+                    normalizedDeltaY = deltaY / deltaMagnitude
+                else:
+                    normalizedDeltaX = 0
+                    normalizedDeltaY = 0
+                # move the rock toward the scissor at a rate of 1 unit of distance per second
+                rock.center_x += normalizedDeltaX
+                rock.center_y += normalizedDeltaY
         
 def main():
     # create game window
