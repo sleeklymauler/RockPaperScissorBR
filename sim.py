@@ -9,9 +9,10 @@ import sys
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
     # constructor
-    def __init__(self, filename, scale, hit_box_algorithm):
+    def __init__(self, filename, scale, hit_box_algorithm, type):
         # call the Sprite class's constructor
         super().__init__(filename = filename, scale = scale, hit_box_algorithm = hit_box_algorithm)
+        self.type = type
     
     # called when the Game class updates
     def update(self, deltaX, deltaY):
@@ -29,6 +30,8 @@ class Game(arcade.Window):
     collisionList = []
     # counter to delay start of main loop
     counter = 0
+    # number of each type of weapon
+    WEAPON_COUNT = 50
     
     # constructor
     def __init__(self):
@@ -53,9 +56,9 @@ class Game(arcade.Window):
 
         # create all of the sprites
         # SPRITES ARE 120 X 120 PIXELS
-        for i in range(50):
+        for i in range(Game.WEAPON_COUNT):
             # rock sprites
-            rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed")
+            rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
             # set position on screen to be random, adjust so the entire sprite is on the screen
             rock.center_x = random.randrange(60, Game.screenWidth - 60)
             rock.center_y = random.randrange(60, Game.screenHeight - 60)
@@ -63,7 +66,7 @@ class Game(arcade.Window):
             self.rockList.append(rock)
 
             # paper sprites
-            paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed")
+            paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
             # set position on screen to be random, adjust so the entire sprite is on the screen
             paper.center_x = random.randrange(60, Game.screenWidth - 60)
             paper.center_y = random.randrange(60, Game.screenHeight - 60)
@@ -71,7 +74,7 @@ class Game(arcade.Window):
             self.paperList.append(paper)
 
             # scissor sprites
-            scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed")
+            scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
             # set position on screen to be random, adjust so the entire sprite is on the screen
             scissor.center_x = random.randrange(60, Game.screenWidth - 60)
             scissor.center_y = random.randrange(60, Game.screenHeight - 60)
@@ -86,7 +89,7 @@ class Game(arcade.Window):
                 if arcade.check_for_collision(paper, rock):
                     Game.collisionList.append((rock.center_x, rock.center_y))
                     # create new paper weapon where rock weapon originally was
-                    newPaper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed")
+                    newPaper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
                     newPaper.center_x = rock.center_x
                     newPaper.center_y = rock.center_y
                     # add new paper to paperList and remove the old rock from rockList
@@ -99,7 +102,7 @@ class Game(arcade.Window):
                 if arcade.check_for_collision(rock, scissor):
                     Game.collisionList.append((scissor.center_x, scissor.center_y))
                     # create new rock weapon where scissor weapon originally was
-                    newRock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed")
+                    newRock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
                     newRock.center_x = scissor.center_x
                     newRock.center_y = scissor.center_y
                     # add new rock to rockList and remove the old scissor from scissorList
@@ -112,7 +115,7 @@ class Game(arcade.Window):
                 if arcade.check_for_collision(scissor, paper):
                     Game.collisionList.append((paper.center_x, paper.center_y))
                     # create new scissor weapon where paper weapon originally was
-                    newScissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed")
+                    newScissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
                     newScissor.center_x = paper.center_x
                     newScissor.center_y = paper.center_y
                     # add new scissor to scissorList and remove the old paper from paperList
@@ -158,41 +161,61 @@ class Game(arcade.Window):
         else:
             print("Error! Couldn't determine order of initial collisions")
 
-    # the following 3 functions handle moving weapons toward other weapons
-    # moving rocks toward scissors or away from papers
-    def moveRocks(self):
+    # move every weapon toward or away from another weapon
+    def moveWeapons(self):
+        # list to store all the weapons
+        self.weaponList = []
         for rock in self.rockList:
-            # get nearest scissor and nearest paper
-            nearestScissorTuple = arcade.get_closest_sprite(rock, self.scissorList)
-            nearestPaperTuple = arcade.get_closest_sprite(rock, self.paperList)
-            # if all scissors are gone, the nearest scissor is "infinity" away
-            if nearestScissorTuple == None:
-                scissorDistance = sys.maxsize
-                nearestScissor = None
+            self.weaponList.append(rock)
+        for paper in self.paperList:
+            self.weaponList.append(paper)
+        for scissor in self.scissorList:
+            self.weaponList.append(scissor)
+        # randomize the order
+        random.shuffle(self.weaponList)
+        # determine closest opposing weapons for each weapon
+        for weapon in self.weaponList:
+            if weapon.type == "rock":
+                # rock beats scissors but loses to paper
+                nearestBeatTuple = arcade.get_closest_sprite(weapon, self.scissorList)
+                nearestLoseTuple = arcade.get_closest_sprite(weapon, self.paperList)
+            elif weapon.type == "paper":
+                # paper beats rock but loses to scissors
+                nearestBeatTuple = arcade.get_closest_sprite(weapon, self.rockList)
+                nearestLoseTuple = arcade.get_closest_sprite(weapon, self.scissorList)
+            elif weapon.type == "scissor":
+                # scissor beats paper but loses to rock
+                nearestBeatTuple = arcade.get_closest_sprite(weapon, self.paperList)
+                nearestLoseTuple = arcade.get_closest_sprite(weapon, self.rockList)
             else:
-                scissorDistance = nearestScissorTuple[1]
-                nearestScissor = nearestScissorTuple[0]
-            # if all papers are gone, the nearest paper is "infinity" away
-            if nearestPaperTuple == None:
-                paperDistance = sys.maxsize
-                nearestPaper = None
-            else:
-                paperDistance = nearestPaperTuple[1]
-                nearestPaper = nearestPaperTuple[0]
-            # if all papers and scissors are gone, rock has won
-            if nearestPaperTuple == None and nearestScissorTuple == None:
-                return
+                print("Error! Couldn't determine type of weapon")
             
-            # move to attack scissors if they are closer
-            if (scissorDistance <= paperDistance):
+            # handle cases where there are no more opposing weapons
+            if nearestBeatTuple == None:
+                nearestBeat = None
+                beatDistance = sys.maxsize
+            else:
+                nearestBeat = nearestBeatTuple[0]
+                beatDistance = nearestBeatTuple[1]
+            if nearestLoseTuple == None:
+                nearestLose = None
+                loseDistance = sys.maxsize
+            else:
+                nearestLose = nearestLoseTuple[0]
+                loseDistance = nearestLoseTuple[1]
+            # if all other weapons are gone, the current weapon has won
+            if nearestBeatTuple == None and nearestLoseTuple == None:
+                return
+            # move to attack weapon that can be beat if its closer
+            if (beatDistance <= loseDistance):
                 # calculate x and y components of vector from rock to scissor
-                deltaX = nearestScissor.center_x - rock.center_x
-                deltaY = nearestScissor.center_y - rock.center_y
-            # run away from papers if they are closer
+                deltaX = nearestBeat.center_x - weapon.center_x
+                deltaY = nearestBeat.center_y - weapon.center_y
+            # run away from weapon that can't be beat if its closer
             else:
                 # calculate x and y components of vector from rock to paper and then reverse its direction
-                deltaX = -1 * (nearestPaper.center_x - rock.center_x)
-                deltaY = -1 * (nearestPaper.center_y - rock.center_y)
+                deltaX = -1 * (nearestLose.center_x - weapon.center_x)
+                deltaY = -1 * (nearestLose.center_y - weapon.center_y)
             # calculate magnitude of this vector
             deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
             # normalize the x and y components so their new magnitude is 1
@@ -202,139 +225,10 @@ class Game(arcade.Window):
             else:
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
-            # move the rock toward the scissor or away from the paper at a rate of 2 units of distance per second
-            rock.center_x += 2 * normalizedDeltaX
-            rock.center_y += 2 * normalizedDeltaY
-    # moving papers towards rocks or away from scissors
-    def movePapers(self):
-        for paper in self.paperList:
-            # get nearest rock and nearest scissor
-            nearestRockTuple = arcade.get_closest_sprite(paper, self.rockList)
-            nearestScissorTuple = arcade.get_closest_sprite(paper, self.scissorList)
-            # if all rocks are gone, the nearest rock is "infinity" away
-            if nearestRockTuple == None:
-                rockDistance = sys.maxsize
-                nearestRock = None
-            else:
-                rockDistance = nearestRockTuple[1]
-                nearestRock = nearestRockTuple[0]
-            # if all scissors are gone, the nearest scissor is "infinity" away
-            if nearestScissorTuple == None:
-                scissorDistance = sys.maxsize
-                nearestScissor = None
-            else:
-                scissorDistance = nearestScissorTuple[1]
-                nearestScissor = nearestScissorTuple[0]
-            # if all rocks and scissors are gone, paper has won
-            if nearestRockTuple == None and nearestScissorTuple == None:
-                return
-            
-            # move to attack rocks if they are closer
-            if (rockDistance <= scissorDistance):
-                # calculate x and y components of vector from paper to rock
-                deltaX = nearestRock.center_x - paper.center_x
-                deltaY = nearestRock.center_y - paper.center_y
-            # run away from scissors if they are closer
-            else:
-                # calculate x and y components of vector from paper to scissor, then reverse its direction
-                deltaX = -1 * (nearestScissor.center_x - paper.center_x)
-                deltaY = -1 * (nearestScissor.center_y - paper.center_y)
-            # calculate magnitude of this vector
-            deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
-            # normalize the x and y components so their new magnitude is 1
-            if deltaMagnitude != 0:
-                normalizedDeltaX = deltaX / deltaMagnitude
-                normalizedDeltaY = deltaY / deltaMagnitude
-            else:
-                normalizedDeltaX = 0
-                normalizedDeltaY = 0
-            # move the rock toward the scissor or away from the paper at a rate of 2 units of distance per second
-            paper.center_x += 2 * normalizedDeltaX
-            paper.center_y += 2 * normalizedDeltaY
-    # moving scissors towards papers or away from rocks
-    def moveScissors(self):
-        for scissor in self.scissorList:
-            # get nearest paper and nearest rock
-            nearestRockTuple = arcade.get_closest_sprite(scissor, self.rockList)
-            nearestPaperTuple = arcade.get_closest_sprite(scissor, self.paperList)
-            # if all rocks are gone, the nearest rock is "infinity" away
-            if nearestRockTuple == None:
-                rockDistance = sys.maxsize
-                nearestRock = None
-            else:
-                rockDistance = nearestRockTuple[1]
-                nearestRock = nearestRockTuple[0]
-            # if all papers are gone, the nearest paper is "infinity" away
-            if nearestPaperTuple == None:
-                paperDistance = sys.maxsize
-                nearestPaper = None
-            else:
-                paperDistance = nearestPaperTuple[1]
-                nearestPaper = nearestPaperTuple[0]
-            # if all rocks and papers are gone, scissors has won
-            if nearestRockTuple == None and nearestPaperTuple == None:
-                return
-            
-            # move to attack papers if they are closer
-            if (paperDistance <= rockDistance):
-                # calculate x and y components of vector from scissor to paper
-                deltaX = nearestPaper.center_x - scissor.center_x
-                deltaY = nearestPaper.center_y - scissor.center_y
-            # run away from rocks if they are closer
-            else:
-                # calculate x and y components of vector from scissor to rock, then reverse its direction
-                deltaX = -1 * (nearestRock.center_x - scissor.center_x)
-                deltaY = -1 * (nearestRock.center_y - scissor.center_y)
-            # calculate magnitude of this vector
-            deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
-            # normalize the x and y components so their new magnitude is 1
-            if deltaMagnitude != 0:
-                normalizedDeltaX = deltaX / deltaMagnitude
-                normalizedDeltaY = deltaY / deltaMagnitude
-            else:
-                normalizedDeltaX = 0
-                normalizedDeltaY = 0
-            # move the scissor toward the paper or away from the rock at a rate of 2 units of distance per second
-            scissor.center_x += 2 * normalizedDeltaX
-            scissor.center_y += 2 * normalizedDeltaY
-    # call the 3 functions above in a random order
-    def moveWeapons(self):
-        # randomize order to fix collisions to keep all sides balanced
-        # potential collision orders are:
-        # 1) rock, paper, scissors
-        # 2) rock, scissors, paper
-        # 3) paper, rock, scissors
-        # 4) paper, scissors, rock
-        # 5) scissors, rock, paper
-        # 6) scissors, paper, rock
-
-        order = random.randint(1, 6)
-        if order == 1:
-            Game.moveRocks(self)
-            Game.movePapers(self)
-            Game.moveScissors(self)
-        elif order == 2:
-            Game.moveRocks(self)
-            Game.moveScissors(self)
-            Game.movePapers(self)
-        elif order == 3:
-            Game.movePapers(self)
-            Game.moveRocks(self)
-            Game.moveScissors(self)
-        elif order == 4:
-            Game.movePapers(self)
-            Game.moveScissors(self)
-            Game.moveRocks(self)
-        elif order == 5:
-            Game.moveScissors(self)
-            Game.moveRocks(self)
-            Game.movePapers(self)
-        elif order == 6:
-            Game.moveScissors(self)
-            Game.movePapers(self)
-            Game.moveRocks(self)
-        else:
-            print("Error! Couldn't determine order to move weapons")
+            # move the weapon toward the weapon that can be beat or away from the weapon
+            # that can't be beat at a rate of 2 units of distance per second
+            weapon.center_x += 2 * normalizedDeltaX
+            weapon.center_y += 2 * normalizedDeltaY
         
     # draws things on screen 60 times a second
     def on_draw(self):
