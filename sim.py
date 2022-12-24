@@ -73,13 +73,19 @@ class Game(arcade.Window):
             # add to sprite list
             self.scissorList.append(scissor)
 
-    # the following 3 functions prevent overlap of different weapons when the game initializes
-    # iterates through rock list and removes all rocks that collide with paper
+    # the following 3 functions handle collisions between different weapons
+    # iterates through rock list and changes all rocks that collide with paper to paper
     def rockPaperCollision(self):
         for paper in self.paperList:
             for rock in self.rockList:
                 if arcade.check_for_collision(paper, rock):
                     Game.collisionList.append((rock.center_x, rock.center_y))
+                    # create new paper weapon where rock weapon originally was
+                    newPaper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed")
+                    newPaper.center_x = rock.center_x
+                    newPaper.center_y = rock.center_y
+                    # add new paper to paperList and remove the old rock from rockList
+                    self.paperList.append(newPaper)
                     self.rockList.remove(rock)
     # iterates through scissor list and removes all scissors that collide with rock
     def scissorRockCollision(self):
@@ -87,6 +93,12 @@ class Game(arcade.Window):
             for scissor in self.scissorList:
                 if arcade.check_for_collision(rock, scissor):
                     Game.collisionList.append((scissor.center_x, scissor.center_y))
+                    # create new rock weapon where scissor weapon originally was
+                    newRock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed")
+                    newRock.center_x = scissor.center_x
+                    newRock.center_y = scissor.center_y
+                    # add new rock to rockList and remove the old scissor from scissorList
+                    self.rockList.append(newRock)
                     self.scissorList.remove(scissor)
     # iterates through paper list and removes all paper that collides with scissors
     def paperScissorCollision(self):
@@ -94,6 +106,12 @@ class Game(arcade.Window):
             for paper in self.paperList:
                 if arcade.check_for_collision(scissor, paper):
                     Game.collisionList.append((paper.center_x, paper.center_y))
+                    # create new scissor weapon where paper weapon originally was
+                    newScissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed")
+                    newScissor.center_x = paper.center_x
+                    newScissor.center_y = paper.center_y
+                    # add new scissor to scissorList and remove the old paper from paperList
+                    self.scissorList.append(newScissor)
                     self.paperList.remove(paper)
     
     # calls the above 3 functions in a random order to fix weapon overlap at the start of the game
@@ -156,18 +174,14 @@ class Game(arcade.Window):
             self.paperList.draw()
             self.scissorList.draw()
             # circle initial collisions
-            # for coords in Game.collisionList:
-            #     arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
+            for coords in Game.collisionList:
+                arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
 
     # updates values 60 times a second
     def update(self, delta_time):
         # delay game start for 2 seconds
         if Game.counter < 120:
-            # draw all of the sprites
-            self.rockList.draw()
-            self.paperList.draw()
-            self.scissorList.draw()
-            # Game.counter is already being updated in the on_draw() function
+            pass
         else:
             for rock in self.rockList:
                 # get nearest scissor
@@ -185,8 +199,8 @@ class Game(arcade.Window):
                     normalizedDeltaX = 0
                     normalizedDeltaY = 0
                 # move the rock toward the scissor at a rate of 1 unit of distance per second
-                rock.center_x += normalizedDeltaX
-                rock.center_y += normalizedDeltaY
+                # rock.center_x += normalizedDeltaX
+                # rock.center_y += normalizedDeltaY
         
 def main():
     # create game window
