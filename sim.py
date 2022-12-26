@@ -218,28 +218,6 @@ class Game(arcade.Window):
                 # calculate x and y components of vector from rock to paper and then reverse its direction
                 deltaX = -1 * (nearestLose.center_x - weapon.center_x)
                 deltaY = -1 * (nearestLose.center_y - weapon.center_y)
-            # don't let weapons go off screen
-            if (weapon.center_x + deltaX >= (Game.screenWidth - 20) or weapon.center_x + deltaX <= 10):
-                deltaX = 0
-            if (weapon.center_y + deltaY >= (Game.screenHeight - 20) or weapon.center_y + deltaY <= 50):
-                deltaY = 0
-            # don't let weapons touch weapons of same type (no overlap)
-            if weapon.type == "rock":
-                for rock in self.rockList:
-                    if weapon != rock:
-                        nextX = weapon.center_x + deltaX
-                        nextY = weapon.center_y + deltaY
-                        # check if coordinates are within circle centered at rock's center with radius 60, and decrease them until they aren't
-                        while math.pow((weapon.center_x + deltaX) - rock.center_x, 2) + math.pow(weapon.center_y + deltaY - rock.center_y, 2) <= math.pow(60, 2):
-                            # do I need to scale these at all?
-                            if (deltaX > 0):
-                                deltaX -= 1
-                            else:
-                                deltaX += 1
-                            if (deltaY > 0):
-                                deltaY -= 1
-                            else:
-                                deltaY += 1
             # calculate magnitude of this vector
             deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
             # normalize the x and y components so their new magnitude is 1
@@ -249,10 +227,27 @@ class Game(arcade.Window):
             else:
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
+            # don't let weapons go off screen
+            if weapon.center_x + normalizedDeltaX >= (Game.screenWidth - 60):
+                normalizedDeltaX = (Game.screenWidth - 60) - weapon.center_x
+            elif weapon.center_x + normalizedDeltaX <= 60:
+                normalizedDeltaX = 60 - weapon.center_x
+            if weapon.center_y + deltaY >= (Game.screenHeight - 60):
+                normalizedDeltaY = (Game.screenHeight - 60) - weapon.center_y
+            elif weapon.center_y + normalizedDeltaY <= 60:
+                normalizedDeltaY = 60 - weapon.center_y
+            # renormalize the vectors
+            deltaMagnitude = math.sqrt(math.pow(normalizedDeltaX, 2) + math.pow(normalizedDeltaY, 2))
+            if deltaMagnitude != 0:
+                normalizedDeltaX = normalizedDeltaX / deltaMagnitude
+                normalizedDeltaY = normalizedDeltaY / deltaMagnitude
+            else:
+                normalizedDeltaX = 0
+                normalizedDeltaY = 0
             # move the weapon toward the weapon that can be beat or away from the weapon
             # that can't be beat at a rate of 1 unit of distance per second
-            weapon.center_x += 1 * normalizedDeltaX
-            weapon.center_y += 1 * normalizedDeltaY
+            weapon.center_x += 2 * normalizedDeltaX
+            weapon.center_y += 2 * normalizedDeltaY
         
     # draws things on screen 60 times a second
     def on_draw(self):
