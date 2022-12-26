@@ -173,7 +173,7 @@ class Game(arcade.Window):
             self.weaponList.append(scissor)
         # randomize the order
         random.shuffle(self.weaponList)
-        # determine closest opposing weapons for each weapon
+        # determine closest weapons for each weapon
         for weapon in self.weaponList:
             if weapon.type == "rock":
                 # rock beats scissors but loses to paper
@@ -183,10 +183,12 @@ class Game(arcade.Window):
                 # paper beats rock but loses to scissors
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.rockList)
                 nearestLoseTuple = arcade.get_closest_sprite(weapon, self.scissorList)
+                nearestSameTuple = arcade.get_closest_sprite(weapon, self.paperList)
             elif weapon.type == "scissor":
                 # scissor beats paper but loses to rock
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.paperList)
                 nearestLoseTuple = arcade.get_closest_sprite(weapon, self.rockList)
+                nearestSameTuple = arcade.get_closest_sprite(weapon, self.rockList)
             else:
                 print("Error! Couldn't determine type of weapon")
             
@@ -221,6 +223,23 @@ class Game(arcade.Window):
                 deltaX = 0
             if (weapon.center_y + deltaY >= (Game.screenHeight - 20) or weapon.center_y + deltaY <= 50):
                 deltaY = 0
+            # don't let weapons touch weapons of same type (no overlap)
+            if weapon.type == "rock":
+                for rock in self.rockList:
+                    if weapon != rock:
+                        nextX = weapon.center_x + deltaX
+                        nextY = weapon.center_y + deltaY
+                        # check if coordinates are within circle centered at rock's center with radius 60, and decrease them until they aren't
+                        while math.pow((weapon.center_x + deltaX) - rock.center_x, 2) + math.pow(weapon.center_y + deltaY - rock.center_y, 2) <= math.pow(60, 2):
+                            # do I need to scale these at all?
+                            if (deltaX > 0):
+                                deltaX -= 1
+                            else:
+                                deltaX += 1
+                            if (deltaY > 0):
+                                deltaY -= 1
+                            else:
+                                deltaY += 1
             # calculate magnitude of this vector
             deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
             # normalize the x and y components so their new magnitude is 1
@@ -231,9 +250,9 @@ class Game(arcade.Window):
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
             # move the weapon toward the weapon that can be beat or away from the weapon
-            # that can't be beat at a rate of 2.5 units of distance per second
-            weapon.center_x += 2.5 * normalizedDeltaX
-            weapon.center_y += 2.5 * normalizedDeltaY
+            # that can't be beat at a rate of 1 unit of distance per second
+            weapon.center_x += 1 * normalizedDeltaX
+            weapon.center_y += 1 * normalizedDeltaY
         
     # draws things on screen 60 times a second
     def on_draw(self):
