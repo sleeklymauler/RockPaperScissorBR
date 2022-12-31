@@ -4,21 +4,32 @@ import time
 import math
 import sys
 
-# TODO: fix issue where weapons drift offscreen
+# TODO: stop weapons overlapping
 
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
     # static variables
+    # ranges of coordinates weapons can have without going offscreen
     minX = 15
     maxX = arcade.get_display_size()[0] - 30
     minY = 50
     maxY = arcade.get_display_size()[1] - 20
+    # circle radius to prevent same weapon overlap
+    overlapRadius = 0
     
     # constructor
     def __init__(self, filename, scale, hit_box_algorithm, type):
         # call the Sprite class's constructor
         super().__init__(filename = filename, scale = scale, hit_box_algorithm = hit_box_algorithm)
         self.type = type
+        if type == "rock":
+            Weapon.overlapRadius = 17
+        elif type == "paper":
+            Weapon.overlapRadius = 20
+        elif type == "scissor":
+            Weapon.overlapRadius = 19
+        else:
+            print("Error! Couldn't determine radius of overlap circle")
     
     # called when the Game class updates
     def update(self, deltaX, deltaY):
@@ -186,16 +197,17 @@ class Game(arcade.Window):
                 # rock beats scissors but loses to paper
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.scissorList)
                 nearestLoseTuple = arcade.get_closest_sprite(weapon, self.paperList)
+                selfList = self.rockList
             elif weapon.type == "paper":
                 # paper beats rock but loses to scissors
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.rockList)
                 nearestLoseTuple = arcade.get_closest_sprite(weapon, self.scissorList)
-                nearestSameTuple = arcade.get_closest_sprite(weapon, self.paperList)
+                selfList = self.paperList
             elif weapon.type == "scissor":
                 # scissor beats paper but loses to rock
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.paperList)
                 nearestLoseTuple = arcade.get_closest_sprite(weapon, self.rockList)
-                nearestSameTuple = arcade.get_closest_sprite(weapon, self.rockList)
+                selfList = self.scissorList
             else:
                 print("Error! Couldn't determine type of weapon")
             
@@ -234,6 +246,12 @@ class Game(arcade.Window):
             else:
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
+            # don't let weapons of the same type run into each other
+            # for friend in selfList:
+            #     if math.pow((weapon.center_x + normalizedDeltaX) - (friend.center_x), 2) + math.pow((weapon.center_y + normalizedDeltaY) - (friend.center_y), 2) <= math.pow(friend.overlapRadius, 2):
+            #         normalizedDeltaX = 0
+            #         normalizedDeltaY = 0
+            #         break
             # don't let weapons go off screen
             if weapon.center_x + normalizedDeltaX >= weapon.maxX:
                 normalizedDeltaX = weapon.maxX - weapon.center_x
@@ -251,10 +269,11 @@ class Game(arcade.Window):
             else:
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
-            # move the weapon toward the weapon that can be beat or away from the weapon
-            # that can't be beat at a rate of 1 unit of distance per second
-            weapon.center_x += 2 * normalizedDeltaX
-            weapon.center_y += 2 * normalizedDeltaY
+            # move the current weapon toward the weapon that can be beat or away from the weapon
+            # that can't be beat by a random amount
+            rate = random.uniform(0.5, 3)
+            weapon.center_x += rate * normalizedDeltaX
+            weapon.center_y += rate * normalizedDeltaY
         
     # draws things on screen 60 times a second
     def on_draw(self):
@@ -264,9 +283,12 @@ class Game(arcade.Window):
         self.rockList.draw()
         self.paperList.draw()
         self.scissorList.draw()
-        # circle initial collisions
-        # for coords in Game.collisionList:
-        #     arcade.draw_circle_outline(coords[0], coords[1], 30, arcade.color.BLACK)
+        # for rock in self.rockList:
+        #     arcade.draw_circle_outline(rock.center_x, rock.center_y, 17, arcade.color.BLACK)
+        # for paper in self.paperList:
+        #     arcade.draw_circle_outline(paper.center_x, paper.center_y, 20, arcade.color.BLACK)
+        # for scissor in self.scissorList:
+        #     arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
 
     # updates values 60 times a second
     def on_update(self, delta_time):
