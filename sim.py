@@ -8,6 +8,12 @@ import sys
 
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
+    # static variables
+    minX = 15
+    maxX = arcade.get_display_size()[0] - 30
+    minY = 50
+    maxY = arcade.get_display_size()[1] - 20
+    
     # constructor
     def __init__(self, filename, scale, hit_box_algorithm, type):
         # call the Sprite class's constructor
@@ -60,24 +66,25 @@ class Game(arcade.Window):
             # rock sprites
             rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            rock.center_x = random.randrange(60, Game.screenWidth - 60)
-            rock.center_y = random.randrange(60, Game.screenHeight - 60)
+            # 15, 50, -30, -20
+            rock.center_x = random.randrange(rock.minX, rock.maxX)
+            rock.center_y = random.randrange(rock.minY, rock.maxY)
             # add to sprite list
             self.rockList.append(rock)
 
             # paper sprites
             paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            paper.center_x = random.randrange(60, Game.screenWidth - 60)
-            paper.center_y = random.randrange(60, Game.screenHeight - 60)
+            paper.center_x = random.randrange(paper.minX, paper.maxX)
+            paper.center_y = random.randrange(paper.minY, paper.maxY)
             # add to sprite list
             self.paperList.append(paper)
 
             # scissor sprites
             scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            scissor.center_x = random.randrange(60, Game.screenWidth - 60)
-            scissor.center_y = random.randrange(60, Game.screenHeight - 60)
+            scissor.center_x = random.randrange(scissor.minX, scissor.maxX)
+            scissor.center_y = random.randrange(scissor.minY, scissor.maxY)
             # add to sprite list
             self.scissorList.append(scissor)
 
@@ -228,14 +235,14 @@ class Game(arcade.Window):
                 normalizedDeltaX = 0
                 normalizedDeltaY = 0
             # don't let weapons go off screen
-            if weapon.center_x + normalizedDeltaX >= (Game.screenWidth - 60):
-                normalizedDeltaX = (Game.screenWidth - 60) - weapon.center_x
-            elif weapon.center_x + normalizedDeltaX <= 60:
-                normalizedDeltaX = 60 - weapon.center_x
-            if weapon.center_y + deltaY >= (Game.screenHeight - 60):
-                normalizedDeltaY = (Game.screenHeight - 60) - weapon.center_y
-            elif weapon.center_y + normalizedDeltaY <= 60:
-                normalizedDeltaY = 60 - weapon.center_y
+            if weapon.center_x + normalizedDeltaX >= weapon.maxX:
+                normalizedDeltaX = weapon.maxX - weapon.center_x
+            elif weapon.center_x + normalizedDeltaX <= weapon.minX:
+                normalizedDeltaX = weapon.minX - weapon.center_x
+            if weapon.center_y + deltaY >= weapon.maxY:
+                normalizedDeltaY = weapon.maxY - weapon.center_y
+            elif weapon.center_y + normalizedDeltaY <= weapon.minY:
+                normalizedDeltaY = weapon.minY - weapon.center_y
             # renormalize the vectors
             deltaMagnitude = math.sqrt(math.pow(normalizedDeltaX, 2) + math.pow(normalizedDeltaY, 2))
             if deltaMagnitude != 0:
