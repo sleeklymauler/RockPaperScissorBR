@@ -16,6 +16,8 @@ class Weapon(arcade.Sprite):
     maxY = arcade.get_display_size()[1] - 20
     # circle radius to prevent same weapon overlap
     overlapRadius = 0
+
+    #
     
     # constructor
     def __init__(self, filename, scale, hit_box_algorithm, type):
