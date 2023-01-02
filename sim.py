@@ -14,10 +14,6 @@ class Weapon(arcade.Sprite):
     maxX = arcade.get_display_size()[0] - 30
     minY = 50
     maxY = arcade.get_display_size()[1] - 20
-    # circle radius to prevent same weapon overlap
-    overlapRadius = 0
-
-    #
     
     # constructor
     def __init__(self, filename, scale, hit_box_algorithm, type):
@@ -45,8 +41,6 @@ class Game(arcade.Window):
     # storing height and width of screen
     screenWidth = arcade.get_display_size()[0]
     screenHeight = arcade.get_display_size()[1]
-    # storing collision coordinates (remove this later?)
-    collisionList = []
     # counter to delay start of main loop
     counter = 0
     # number of each type of weapon
@@ -101,6 +95,7 @@ class Game(arcade.Window):
             scissor.center_y = random.randrange(scissor.minY, scissor.maxY)
             # add to sprite list
             self.scissorList.append(scissor)
+        
         # set up walls
         topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.screenHeight)
         self.wallList.append(topWall)
@@ -116,7 +111,6 @@ class Game(arcade.Window):
         for paper in self.paperList:
             for rock in self.rockList:
                 if arcade.check_for_collision(paper, rock):
-                    Game.collisionList.append((rock.center_x, rock.center_y))
                     # create new paper weapon where rock weapon originally was
                     newPaper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
                     newPaper.center_x = rock.center_x
@@ -129,7 +123,6 @@ class Game(arcade.Window):
         for rock in self.rockList:
             for scissor in self.scissorList:
                 if arcade.check_for_collision(rock, scissor):
-                    Game.collisionList.append((scissor.center_x, scissor.center_y))
                     # create new rock weapon where scissor weapon originally was
                     newRock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
                     newRock.center_x = scissor.center_x
@@ -142,7 +135,6 @@ class Game(arcade.Window):
         for scissor in self.scissorList:
             for paper in self.paperList:
                 if arcade.check_for_collision(scissor, paper):
-                    Game.collisionList.append((paper.center_x, paper.center_y))
                     # create new scissor weapon where paper weapon originally was
                     newScissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
                     newScissor.center_x = paper.center_x
@@ -292,7 +284,7 @@ class Game(arcade.Window):
         #     arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
 
     # updates values 60 times a second
-    def on_update(self, delta_time):
+    def on_update(self, delta_time = 0.0416):
         Game.fixInitialCollisions(self)
         Game.moveWeapons(self)
         
