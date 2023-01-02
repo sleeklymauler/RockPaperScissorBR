@@ -195,6 +195,9 @@ class Game(arcade.Window):
         random.shuffle(self.weaponList)
         # determine closest weapons for each weapon
         for weapon in self.weaponList:
+            # save original location
+            currentX = weapon.center_x
+            currentY = weapon.center_y
             if weapon.type == "rock":
                 # rock beats scissors but loses to paper
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.scissorList)
@@ -245,32 +248,34 @@ class Game(arcade.Window):
             if deltaMagnitude != 0:
                 normalizedDeltaX = deltaX / deltaMagnitude
                 normalizedDeltaY = deltaY / deltaMagnitude
-            else:
-                normalizedDeltaX = 0
-                normalizedDeltaY = 0
-            # don't let weapons of the same type run into each other
-            # for friend in selfList:
-            #     if math.pow((weapon.center_x + normalizedDeltaX) - (friend.center_x), 2) + math.pow((weapon.center_y + normalizedDeltaY) - (friend.center_y), 2) <= math.pow(friend.overlapRadius, 2):
-            #         normalizedDeltaX = 0
-            #         normalizedDeltaY = 0
-            #         break
-            # don't let weapons go off screen
-            if weapon.center_x + normalizedDeltaX >= weapon.maxX:
-                normalizedDeltaX = weapon.maxX - weapon.center_x
-            elif weapon.center_x + normalizedDeltaX <= weapon.minX:
-                normalizedDeltaX = weapon.minX - weapon.center_x
-            if weapon.center_y + deltaY >= weapon.maxY:
-                normalizedDeltaY = weapon.maxY - weapon.center_y
-            elif weapon.center_y + normalizedDeltaY <= weapon.minY:
-                normalizedDeltaY = weapon.minY - weapon.center_y
+            # avoid collisions between weapons of the same type
+            scale = 0.9
+            originalNDX = normalizedDeltaX
+            originalNDY = normalizedDeltaY
+            # temporarily remove the current weapon from its own weapon list
+            selfList.remove(weapon)
+            while arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList):
+                normalizedDeltaX = scale * originalNDX
+                normalizedDeltaY = scale * originalNDY
+                scale -= 0.1
+            selfList.append(weapon)
+            
+            # if weapon.center_x + normalizedDeltaX >= weapon.maxX:
+            #     normalizedDeltaX = weapon.maxX - weapon.center_x
+            # elif weapon.center_x + normalizedDeltaX <= weapon.minX:
+            #     normalizedDeltaX = weapon.minX - weapon.center_x
+            # if weapon.center_y + deltaY >= weapon.maxY:
+            #     normalizedDeltaY = weapon.maxY - weapon.center_y
+            # elif weapon.center_y + normalizedDeltaY <= weapon.minY:
+            #     normalizedDeltaY = weapon.minY - weapon.center_y
             # renormalize the vectors
-            deltaMagnitude = math.sqrt(math.pow(normalizedDeltaX, 2) + math.pow(normalizedDeltaY, 2))
-            if deltaMagnitude != 0:
-                normalizedDeltaX = normalizedDeltaX / deltaMagnitude
-                normalizedDeltaY = normalizedDeltaY / deltaMagnitude
-            else:
-                normalizedDeltaX = 0
-                normalizedDeltaY = 0
+            # deltaMagnitude = math.sqrt(math.pow(normalizedDeltaX, 2) + math.pow(normalizedDeltaY, 2))
+            # if deltaMagnitude != 0:
+            #     normalizedDeltaX = normalizedDeltaX / deltaMagnitude
+            #     normalizedDeltaY = normalizedDeltaY / deltaMagnitude
+            # else:
+            #     normalizedDeltaX = 0
+            #     normalizedDeltaY = 0
             # move the current weapon toward the weapon that can be beat or away from the weapon
             # that can't be beat by a random amount
             rate = random.uniform(0.5, 3)
@@ -285,12 +290,12 @@ class Game(arcade.Window):
         self.rockList.draw()
         self.paperList.draw()
         self.scissorList.draw()
-        # for rock in self.rockList:
-        #     arcade.draw_circle_outline(rock.center_x, rock.center_y, 17, arcade.color.BLACK)
-        # for paper in self.paperList:
-        #     arcade.draw_circle_outline(paper.center_x, paper.center_y, 20, arcade.color.BLACK)
-        # for scissor in self.scissorList:
-        #     arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
+        for rock in self.rockList:
+            arcade.draw_circle_outline(rock.center_x, rock.center_y, 17, arcade.color.BLACK)
+        for paper in self.paperList:
+            arcade.draw_circle_outline(paper.center_x, paper.center_y, 20, arcade.color.BLACK)
+        for scissor in self.scissorList:
+            arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
 
     # updates values 60 times a second
     def on_update(self, delta_time):
