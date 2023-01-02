@@ -4,22 +4,27 @@ import time
 import math
 import sys
 
-# TODO: stop weapons overlapping
-
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
+    
     # static variables
+    
     # ranges of coordinates weapons can have without going offscreen
     minX = 15
     maxX = arcade.get_display_size()[0] - 30
     minY = 50
     maxY = arcade.get_display_size()[1] - 20
+    # used to draw circles around sprites for debugging
+    overlapRadius = 0
     
     # constructor
     def __init__(self, filename, scale, hit_box_algorithm, type):
+        
         # call the Sprite class's constructor
         super().__init__(filename = filename, scale = scale, hit_box_algorithm = hit_box_algorithm)
         self.type = type
+        
+        # custom circle radii to fit icons
         if type == "rock":
             Weapon.overlapRadius = 17
         elif type == "paper":
@@ -31,23 +36,23 @@ class Weapon(arcade.Sprite):
     
     # called when the Game class updates
     def update(self, deltaX, deltaY):
-        # self.center_x += deltaX
-        # self.center_y += deltaY
         pass
 
 # extend arcade's built in Window class
 class Game(arcade.Window):
+    
     # static variables
+    
     # storing height and width of screen
     screenWidth = arcade.get_display_size()[0]
     screenHeight = arcade.get_display_size()[1]
-    # counter to delay start of main loop
-    counter = 0
+
     # number of each type of weapon
-    WEAPON_COUNT = 20
+    WEAPON_COUNT = 30
     
     # constructor
     def __init__(self):
+        
         # call the Window class's constructor
         super().__init__(Game.screenWidth, Game.screenHeight, "Example", update_rate = 0.0416)
 
@@ -55,6 +60,7 @@ class Game(arcade.Window):
         self.rockList = None
         self.paperList = None
         self.scissorList = None
+        self.wallList = None
 
         # set background color
         arcade.set_background_color(arcade.color.WHITE)
@@ -62,38 +68,39 @@ class Game(arcade.Window):
     
     # sets up the game, can be called multiple times to restart the game
     def setup(self):
+        
         # initialize the sprite lists using arcade's SpriteList
         self.rockList = arcade.SpriteList()
         self.paperList = arcade.SpriteList()
         self.scissorList = arcade.SpriteList()
         self.wallList = arcade.SpriteList()
 
-        # create all of the sprites
+        # create all of the weapon sprites
         # SPRITES ARE 120 X 120 PIXELS
         for i in range(Game.WEAPON_COUNT):
+            
             # rock sprites
+            
             rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            # 15, 50, -30, -20
             rock.center_x = random.randrange(rock.minX, rock.maxX)
             rock.center_y = random.randrange(rock.minY, rock.maxY)
-            # add to sprite list
             self.rockList.append(rock)
 
             # paper sprites
+            
             paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
             # set position on screen to be random, adjust so the entire sprite is on the screen
             paper.center_x = random.randrange(paper.minX, paper.maxX)
             paper.center_y = random.randrange(paper.minY, paper.maxY)
-            # add to sprite list
             self.paperList.append(paper)
 
             # scissor sprites
+            
             scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
             # set position on screen to be random, adjust so the entire sprite is on the screen
             scissor.center_x = random.randrange(scissor.minX, scissor.maxX)
             scissor.center_y = random.randrange(scissor.minY, scissor.maxY)
-            # add to sprite list
             self.scissorList.append(scissor)
         
         # set up walls
@@ -105,87 +112,93 @@ class Game(arcade.Window):
         self.wallList.append(leftWall)
         rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.screenWidth - 10, center_y = Game.screenHeight / 2)
         self.wallList.append(rightWall)
+    
     # the following 3 functions handle collisions between different weapons
-    # iterates through rock list and changes all rocks that collide with paper to paper
-    def rockPaperCollision(self):
+    
+    # iterate through paperList, detect collisions with rocks and resolve them
+    def paperRockCollision(self):
+        
         for paper in self.paperList:
-            for rock in self.rockList:
-                if arcade.check_for_collision(paper, rock):
-                    # create new paper weapon where rock weapon originally was
+            collisionList = arcade.check_for_collision_with_list(paper, self.rockList)
+            if len(collisionList) != 0:
+                for rock in collisionList:
+                    # create new paper at location of rock
                     newPaper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
                     newPaper.center_x = rock.center_x
                     newPaper.center_y = rock.center_y
-                    # add new paper to paperList and remove the old rock from rockList
+
+                    # update sprite lists
                     self.paperList.append(newPaper)
                     self.rockList.remove(rock)
-    # iterates through scissor list and removes all scissors that collide with rock
-    def scissorRockCollision(self):
+
+    # iterate through rockList, detect collisions with scissors and resolve them
+    def rockScissorCollision(self):
+        
         for rock in self.rockList:
-            for scissor in self.scissorList:
-                if arcade.check_for_collision(rock, scissor):
-                    # create new rock weapon where scissor weapon originally was
+            collisionList = arcade.check_for_collision_with_list(rock, self.scissorList)
+            if len(collisionList) != 0:
+                for scissor in collisionList:
+                    # create new rock at location of scissor
                     newRock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
                     newRock.center_x = scissor.center_x
                     newRock.center_y = scissor.center_y
-                    # add new rock to rockList and remove the old scissor from scissorList
+
+                    # update sprite lists
                     self.rockList.append(newRock)
                     self.scissorList.remove(scissor)
-    # iterates through paper list and removes all paper that collides with scissors
-    def paperScissorCollision(self):
+        
+    # iterate through scissorList, detect collisions with papers and resolve them
+    def scissorPaperCollision(self):
+        
         for scissor in self.scissorList:
-            for paper in self.paperList:
-                if arcade.check_for_collision(scissor, paper):
-                    # create new scissor weapon where paper weapon originally was
+            collisionList = arcade.check_for_collision_with_list(scissor, self.paperList)
+            if len(collisionList) != 0:
+                for paper in collisionList:
+                    # create new scissor at location of paper
                     newScissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
                     newScissor.center_x = paper.center_x
                     newScissor.center_y = paper.center_y
-                    # add new scissor to scissorList and remove the old paper from paperList
+
+                    # update sprite lists
                     self.scissorList.append(newScissor)
                     self.paperList.remove(paper)
     
-    # calls the above 3 functions in a random order to fix weapon overlap at the start of the game
-    def fixInitialCollisions(self):
-        # randomize order to fix collisions to keep all sides balanced
-        # potential collision orders are:
-        # 1) rock-paper, scissor-rock, paper-scissor
-        # 2) rock-paper, paper-scissor, scissor-rock
-        # 3) scissor-rock, rock-paper, paper-scissor
-        # 4) scissor-rock, paper-scissor, rock-paper
-        # 5) paper-scissor, scissor-rock, rock-paper
-        # 6) paper-scissor, rock-paper, scissor-rock
+    # update weapons as they collide with each other in a random order
+    def resolveCollisions(self):
 
         order = random.randint(1, 6)
         if order == 1:
-            Game.rockPaperCollision(self)
-            Game.scissorRockCollision(self)
-            Game.paperScissorCollision(self)
+            Game.paperRockCollision(self)
+            Game.rockScissorCollision(self)
+            Game.scissorPaperCollision(self)
         elif order == 2:
-            Game.rockPaperCollision(self)
-            Game.paperScissorCollision(self)
-            Game.scissorRockCollision(self)
+            Game.paperRockCollision(self)
+            Game.scissorPaperCollision(self)
+            Game.rockScissorCollision(self)
         elif order == 3:
-            Game.scissorRockCollision(self)
-            Game.rockPaperCollision(self)
-            Game.paperScissorCollision(self)
+            Game.rockScissorCollision(self)
+            Game.paperRockCollision(self)
+            Game.scissorPaperCollision(self)
         elif order == 4:
-            Game.scissorRockCollision(self)
-            Game.paperScissorCollision(self)
-            Game.rockPaperCollision(self)
+            Game.rockScissorCollision(self)
+            Game.scissorPaperCollision(self)
+            Game.paperRockCollision(self)
         elif order == 5:
-            Game.paperScissorCollision(self)
-            Game.scissorRockCollision(self)
-            Game.rockPaperCollision(self)
+            Game.scissorPaperCollision(self)
+            Game.rockScissorCollision(self)
+            Game.paperRockCollision(self)
         elif order == 6:
-            Game.paperScissorCollision(self)
-            Game.rockPaperCollision(self)
-            Game.scissorRockCollision(self)
+            Game.scissorPaperCollision(self)
+            Game.paperRockCollision(self)
+            Game.rockScissorCollision(self)
         else:
             print("Error! Couldn't determine order of initial collisions")
 
-    # move every weapon toward or away from another weapon
+    # move weapons
     def moveWeapons(self):
+        
         # list to store all the weapons
-        self.weaponList = []
+        self.weaponList = arcade.SpriteList()
         for rock in self.rockList:
             self.weaponList.append(rock)
         for paper in self.paperList:
@@ -193,12 +206,10 @@ class Game(arcade.Window):
         for scissor in self.scissorList:
             self.weaponList.append(scissor)
         # randomize the order
-        random.shuffle(self.weaponList)
-        # determine closest weapons for each weapon
+        self.weaponList.shuffle()
+        
         for weapon in self.weaponList:
-            # save original location
-            currentX = weapon.center_x
-            currentY = weapon.center_y
+            # figure out the 2 closest weapons of different type
             if weapon.type == "rock":
                 # rock beats scissors but loses to paper
                 nearestBeatTuple = arcade.get_closest_sprite(weapon, self.scissorList)
@@ -217,7 +228,7 @@ class Game(arcade.Window):
             else:
                 print("Error! Couldn't determine type of weapon")
             
-            # handle cases where there are no more opposing weapons
+            # handling when closest 2 weapons can't be found
             if nearestBeatTuple == None:
                 nearestBeat = None
                 beatDistance = sys.maxsize
@@ -230,37 +241,44 @@ class Game(arcade.Window):
             else:
                 nearestLose = nearestLoseTuple[0]
                 loseDistance = nearestLoseTuple[1]
-            # if all other weapons are gone, the current weapon has won
             if nearestBeatTuple == None and nearestLoseTuple == None:
+                # win condition
                 return
-            # move to attack weapon that can be beat if its closer
+            
+            # calculate x and y components of "velocity" vector from current weapon to weapon it can beat/lose to based on distance
             if (beatDistance <= loseDistance):
-                # calculate x and y components of vector from rock to scissor
                 deltaX = nearestBeat.center_x - weapon.center_x
                 deltaY = nearestBeat.center_y - weapon.center_y
-            # run away from weapon that can't be beat if its closer
             else:
-                # calculate x and y components of vector from rock to paper and then reverse its direction
+                # reverse vector so weapon runs away from what it loses to
                 deltaX = -1 * (nearestLose.center_x - weapon.center_x)
                 deltaY = -1 * (nearestLose.center_y - weapon.center_y)
-            # calculate magnitude of this vector
+            
+            # calculate magnitude of this velocity vector
             deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
-            # normalize the x and y components so their new magnitude is 1
+            
+            # normalize the velocity vector components
             if deltaMagnitude != 0:
                 normalizedDeltaX = deltaX / deltaMagnitude
                 normalizedDeltaY = deltaY / deltaMagnitude
-            # avoid collisions between weapons of the same type
+            
+            # avoid collisions between weapons of the same type and with walls
+            
             scale = 0.9
             originalNDX = normalizedDeltaX
             originalNDY = normalizedDeltaY
-            # temporarily remove the current weapon from its own weapon list
+            # temporarily remove the current weapon from its own weapon list so it isn't detecting itself
             selfList.remove(weapon)
             while arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList)\
             or arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), self.wallList):
+                if scale == 0:
+                    break
                 normalizedDeltaX = scale * originalNDX
                 normalizedDeltaY = scale * originalNDY
                 scale -= 0.1
             selfList.append(weapon)
+
+            # finally! update weapon's position
             
             #rate = random.uniform(0.5, 3)
             rate = 1
@@ -271,28 +289,25 @@ class Game(arcade.Window):
     def on_draw(self):
         # ready to draw
         arcade.start_render()
+        
         # draw all of the sprites
         self.rockList.draw()
         self.paperList.draw()
         self.scissorList.draw()
         self.wallList.draw()
-        # for rock in self.rockList:
-        #     arcade.draw_circle_outline(rock.center_x, rock.center_y, 17, arcade.color.BLACK)
-        # for paper in self.paperList:
-        #     arcade.draw_circle_outline(paper.center_x, paper.center_y, 20, arcade.color.BLACK)
-        # for scissor in self.scissorList:
-        #     arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
 
-    # updates values 60 times a second
+    # updates values 24 times a second
     def on_update(self, delta_time = 0.0416):
-        Game.fixInitialCollisions(self)
+        Game.resolveCollisions(self)
         Game.moveWeapons(self)
         
 def main():
     # create game window
     window = Game()
+    
     # run game setup
     window.setup()
+    
     # keep window open until user closes it
     arcade.run()
 
