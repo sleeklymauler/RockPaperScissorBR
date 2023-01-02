@@ -260,24 +260,6 @@ class Game(arcade.Window):
                 scale -= 0.1
             selfList.append(weapon)
             
-            # if weapon.center_x + normalizedDeltaX >= weapon.maxX:
-            #     normalizedDeltaX = weapon.maxX - weapon.center_x
-            # elif weapon.center_x + normalizedDeltaX <= weapon.minX:
-            #     normalizedDeltaX = weapon.minX - weapon.center_x
-            # if weapon.center_y + deltaY >= weapon.maxY:
-            #     normalizedDeltaY = weapon.maxY - weapon.center_y
-            # elif weapon.center_y + normalizedDeltaY <= weapon.minY:
-            #     normalizedDeltaY = weapon.minY - weapon.center_y
-            # renormalize the vectors
-            # deltaMagnitude = math.sqrt(math.pow(normalizedDeltaX, 2) + math.pow(normalizedDeltaY, 2))
-            # if deltaMagnitude != 0:
-            #     normalizedDeltaX = normalizedDeltaX / deltaMagnitude
-            #     normalizedDeltaY = normalizedDeltaY / deltaMagnitude
-            # else:
-            #     normalizedDeltaX = 0
-            #     normalizedDeltaY = 0
-            # move the current weapon toward the weapon that can be beat or away from the weapon
-            # that can't be beat by a random amount
             rate = random.uniform(0.5, 3)
             weapon.center_x += rate * normalizedDeltaX
             weapon.center_y += rate * normalizedDeltaY
