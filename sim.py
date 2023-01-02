@@ -50,7 +50,7 @@ class Game(arcade.Window):
     # counter to delay start of main loop
     counter = 0
     # number of each type of weapon
-    WEAPON_COUNT = 50
+    WEAPON_COUNT = 20
     
     # constructor
     def __init__(self):
@@ -72,6 +72,7 @@ class Game(arcade.Window):
         self.rockList = arcade.SpriteList()
         self.paperList = arcade.SpriteList()
         self.scissorList = arcade.SpriteList()
+        self.wallList = arcade.SpriteList()
 
         # create all of the sprites
         # SPRITES ARE 120 X 120 PIXELS
@@ -100,7 +101,15 @@ class Game(arcade.Window):
             scissor.center_y = random.randrange(scissor.minY, scissor.maxY)
             # add to sprite list
             self.scissorList.append(scissor)
-
+        # set up walls
+        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.screenHeight)
+        self.wallList.append(topWall)
+        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = 30)
+        self.wallList.append(bottomWall)
+        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = 3, center_y = Game.screenHeight / 2)
+        self.wallList.append(leftWall)
+        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.screenWidth - 10, center_y = Game.screenHeight / 2)
+        self.wallList.append(rightWall)
     # the following 3 functions handle collisions between different weapons
     # iterates through rock list and changes all rocks that collide with paper to paper
     def rockPaperCollision(self):
@@ -254,13 +263,15 @@ class Game(arcade.Window):
             originalNDY = normalizedDeltaY
             # temporarily remove the current weapon from its own weapon list
             selfList.remove(weapon)
-            while arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList):
+            while arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList)\
+            or arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), self.wallList):
                 normalizedDeltaX = scale * originalNDX
                 normalizedDeltaY = scale * originalNDY
                 scale -= 0.1
             selfList.append(weapon)
             
-            rate = random.uniform(0.5, 3)
+            #rate = random.uniform(0.5, 3)
+            rate = 1
             weapon.center_x += rate * normalizedDeltaX
             weapon.center_y += rate * normalizedDeltaY
         
@@ -272,12 +283,13 @@ class Game(arcade.Window):
         self.rockList.draw()
         self.paperList.draw()
         self.scissorList.draw()
-        for rock in self.rockList:
-            arcade.draw_circle_outline(rock.center_x, rock.center_y, 17, arcade.color.BLACK)
-        for paper in self.paperList:
-            arcade.draw_circle_outline(paper.center_x, paper.center_y, 20, arcade.color.BLACK)
-        for scissor in self.scissorList:
-            arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
+        self.wallList.draw()
+        # for rock in self.rockList:
+        #     arcade.draw_circle_outline(rock.center_x, rock.center_y, 17, arcade.color.BLACK)
+        # for paper in self.paperList:
+        #     arcade.draw_circle_outline(paper.center_x, paper.center_y, 20, arcade.color.BLACK)
+        # for scissor in self.scissorList:
+        #     arcade.draw_circle_outline(scissor.center_x, scissor.center_y, 19, arcade.color.BLACK)
 
     # updates values 60 times a second
     def on_update(self, delta_time):
