@@ -48,7 +48,7 @@ class Game(arcade.Window):
     screenHeight = arcade.get_display_size()[1]
 
     # number of each type of weapon
-    WEAPON_COUNT = 30
+    WEAPON_COUNT = 20
     
     # constructor
     def __init__(self):
@@ -130,6 +130,7 @@ class Game(arcade.Window):
                     # update sprite lists
                     self.paperList.append(newPaper)
                     self.rockList.remove(rock)
+                    del rock
 
     # iterate through rockList, detect collisions with scissors and resolve them
     def rockScissorCollision(self):
@@ -146,6 +147,7 @@ class Game(arcade.Window):
                     # update sprite lists
                     self.rockList.append(newRock)
                     self.scissorList.remove(scissor)
+                    del scissor
         
     # iterate through scissorList, detect collisions with papers and resolve them
     def scissorPaperCollision(self):
@@ -162,6 +164,7 @@ class Game(arcade.Window):
                     # update sprite lists
                     self.scissorList.append(newScissor)
                     self.paperList.remove(paper)
+                    del paper
     
     # update weapons as they collide with each other in a random order
     def resolveCollisions(self):
@@ -264,28 +267,22 @@ class Game(arcade.Window):
             
             # avoid collisions between weapons of the same type and with walls
             
-            scale = 0.9
-            originalNDX = normalizedDeltaX
-            originalNDY = normalizedDeltaY
+            scale = 3
             # temporarily remove the current weapon from its own weapon list so it isn't detecting itself
             selfList.remove(weapon)
-            while arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList)\
-            or arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), self.wallList):
+            while arcade.get_sprites_at_point((weapon.center_x + (scale * normalizedDeltaX), weapon.center_y + (scale * normalizedDeltaY)), selfList)\
+            or arcade.get_sprites_at_point((weapon.center_x + (scale * normalizedDeltaX), weapon.center_y + (scale * normalizedDeltaY)), self.wallList):
                 if scale == 0:
                     break
-                normalizedDeltaX = scale * originalNDX
-                normalizedDeltaY = scale * originalNDY
-                scale -= 0.1
+                scale -= 0.5
             selfList.append(weapon)
 
             # finally! update weapon's position
-            
-            #rate = random.uniform(0.5, 3)
-            rate = 1
+            rate = random.uniform(0, scale)
             weapon.center_x += rate * normalizedDeltaX
             weapon.center_y += rate * normalizedDeltaY
         
-    # draws things on screen 60 times a second
+    # draws things on screen 24 times a second
     def on_draw(self):
         # ready to draw
         arcade.start_render()
