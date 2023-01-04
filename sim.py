@@ -3,6 +3,8 @@ import random
 import time
 import math
 import sys
+from decimal import *
+getcontext().prec = 3
 
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
@@ -198,6 +200,7 @@ class Game(arcade.Window):
             print("Error! Couldn't determine order of initial collisions")
 
     # move weapons
+    @profile
     def moveWeapons(self):
         
         # list to store all the weapons
@@ -274,10 +277,13 @@ class Game(arcade.Window):
             or arcade.get_sprites_at_point((weapon.center_x + (scale * normalizedDeltaX), weapon.center_y + (scale * normalizedDeltaY)), self.wallList):
                 if scale == 0:
                     break
-                scale -= 0.5
+                scale -= 1
             selfList.append(weapon)
 
             # finally! update weapon's position
+            # performance comparison:
+            # using floats, 45 sec program run, time per hit, iMac: (274.7, 257.9), (332.8, 323.6), (331.1, 326.2), (366.0, 356.4), (374.9, 360.4)
+            # using Decimal, 45 sec program run, TODO: do this
             rate = random.uniform(0, scale)
             weapon.center_x += rate * normalizedDeltaX
             weapon.center_y += rate * normalizedDeltaY
