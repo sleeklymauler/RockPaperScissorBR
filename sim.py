@@ -4,6 +4,9 @@ import time
 import math
 import sys
 
+# TODO: HOW to keep sprites away from walls? attractor in center?
+# TODO: still need to EFFICIENTLY stop overlap of same type sprites
+
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
     
