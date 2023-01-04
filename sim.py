@@ -59,6 +59,7 @@ class Game(arcade.Window):
         super().__init__(Game.screenWidth, Game.screenHeight, "Example", update_rate = 0.0416)
 
         # declare the sprite lists
+        self.weaponList = None
         self.rockList = None
         self.paperList = None
         self.scissorList = None
@@ -67,15 +68,14 @@ class Game(arcade.Window):
         # set background color
         arcade.set_background_color(arcade.color.WHITE)
 
-    
     # sets up the game, can be called multiple times to restart the game
     def setup(self):
         
         # initialize the sprite lists using arcade's SpriteList
-        self.rockList = arcade.SpriteList()
-        self.paperList = arcade.SpriteList()
-        self.scissorList = arcade.SpriteList()
-        self.wallList = arcade.SpriteList()
+        self.weaponList = arcade.SpriteList(use_spatial_hash = True)
+        self.rockList = arcade.SpriteList(use_spatial_hash = True)
+        self.paperList = arcade.SpriteList(use_spatial_hash = True)
+        self.scissorList = arcade.SpriteList(use_spatial_hash = True)
 
         # create all of the weapon sprites
         # SPRITES ARE 120 X 120 PIXELS
@@ -87,6 +87,7 @@ class Game(arcade.Window):
             # set position on screen to be random, adjust so the entire sprite is on the screen
             rock.center_x = random.randrange(rock.minX, rock.maxX)
             rock.center_y = random.randrange(rock.minY, rock.maxY)
+            self.weaponList.append(rock)
             self.rockList.append(rock)
 
             # paper sprites
@@ -95,6 +96,7 @@ class Game(arcade.Window):
             # set position on screen to be random, adjust so the entire sprite is on the screen
             paper.center_x = random.randrange(paper.minX, paper.maxX)
             paper.center_y = random.randrange(paper.minY, paper.maxY)
+            self.weaponList.append(paper)
             self.paperList.append(paper)
 
             # scissor sprites
@@ -103,9 +105,11 @@ class Game(arcade.Window):
             # set position on screen to be random, adjust so the entire sprite is on the screen
             scissor.center_x = random.randrange(scissor.minX, scissor.maxX)
             scissor.center_y = random.randrange(scissor.minY, scissor.maxY)
+            self.weaponList.append(scissor)
             self.scissorList.append(scissor)
         
         # set up walls
+        self.wallList = arcade.SpriteList()
         topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.screenHeight)
         self.wallList.append(topWall)
         bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = 30)
@@ -131,7 +135,8 @@ class Game(arcade.Window):
 
                     # update sprite lists
                     self.paperList.append(newPaper)
-                    self.rockList.remove(rock)
+                    self.weaponList.append(newPaper)
+                    rock.remove_from_sprite_lists()
                     del rock
 
     # iterate through rockList, detect collisions with scissors and resolve them
@@ -148,7 +153,8 @@ class Game(arcade.Window):
 
                     # update sprite lists
                     self.rockList.append(newRock)
-                    self.scissorList.remove(scissor)
+                    self.weaponList.append(newRock)
+                    scissor.remove_from_sprite_lists()
                     del scissor
         
     # iterate through scissorList, detect collisions with papers and resolve them
@@ -165,7 +171,8 @@ class Game(arcade.Window):
 
                     # update sprite lists
                     self.scissorList.append(newScissor)
-                    self.paperList.remove(paper)
+                    self.weaponList.append(newScissor)
+                    paper.remove_from_sprite_lists()
                     del paper
     
     # update weapons as they collide with each other in a random order
@@ -200,17 +207,8 @@ class Game(arcade.Window):
             print("Error! Couldn't determine order of initial collisions")
 
     # move weapons
-    @profile
     def moveWeapons(self):
         
-        # list to store all the weapons
-        self.weaponList = arcade.SpriteList()
-        for rock in self.rockList:
-            self.weaponList.append(rock)
-        for paper in self.paperList:
-            self.weaponList.append(paper)
-        for scissor in self.scissorList:
-            self.weaponList.append(scissor)
         # randomize the order
         self.weaponList.shuffle()
         
@@ -235,23 +233,24 @@ class Game(arcade.Window):
                 print("Error! Couldn't determine type of weapon")
             
             # handling when closest 2 weapons can't be found
-            if nearestBeatTuple == None:
-                nearestBeat = None
-                beatDistance = sys.maxsize
-            else:
+            if nearestBeatTuple != None:
                 nearestBeat = nearestBeatTuple[0]
                 beatDistance = nearestBeatTuple[1]
-            if nearestLoseTuple == None:
-                nearestLose = None
-                loseDistance = sys.maxsize
+                
             else:
+                nearestBeat = None
+                beatDistance = sys.maxsize
+            if nearestLoseTuple != None:
                 nearestLose = nearestLoseTuple[0]
                 loseDistance = nearestLoseTuple[1]
+            else:
+                nearestLose = None
+                loseDistance = sys.maxsize
             if nearestBeatTuple == None and nearestLoseTuple == None:
                 # win condition
                 return
             
-            # calculate x and y components of "velocity" vector from current weapon to weapon it can beat/lose to based on distance
+            # calculate x and y components of velocity vector from current weapon to weapon it can beat/lose to based on distance
             if (beatDistance <= loseDistance):
                 deltaX = nearestBeat.center_x - weapon.center_x
                 deltaY = nearestBeat.center_y - weapon.center_y
@@ -260,33 +259,40 @@ class Game(arcade.Window):
                 deltaX = -1 * (nearestLose.center_x - weapon.center_x)
                 deltaY = -1 * (nearestLose.center_y - weapon.center_y)
             
-            # calculate magnitude of this velocity vector
-            deltaMagnitude = math.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
+            # using components of velocity vector, calculate angle w.r.t. positive x-axis
+            angle = math.atan2(deltaY, deltaX)
             
-            # normalize the velocity vector components
-            if deltaMagnitude != 0:
-                normalizedDeltaX = deltaX / deltaMagnitude
-                normalizedDeltaY = deltaY / deltaMagnitude
+            # use angle to normalize components so velocity vector has length velocity
+            normalizedDeltaX = math.cos(angle)
+            normalizedDeltaY = math.sin(angle)
             
             # avoid collisions between weapons of the same type and with walls
             
-            scale = 3
-            # temporarily remove the current weapon from its own weapon list so it isn't detecting itself
+            # temporarily remove the current weapon from its own weapon lists so it isn't detecting itself
             selfList.remove(weapon)
-            while arcade.get_sprites_at_point((weapon.center_x + (scale * normalizedDeltaX), weapon.center_y + (scale * normalizedDeltaY)), selfList)\
-            or arcade.get_sprites_at_point((weapon.center_x + (scale * normalizedDeltaX), weapon.center_y + (scale * normalizedDeltaY)), self.wallList):
-                if scale == 0:
-                    break
-                scale -= 1
+            # random choice whether sprites will rotate cw or ccw
+            ccw = random.randint(0, 1)
+            counter = 0
+            while (arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList)\
+            or arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), self.wallList))\
+            and counter < 180:
+                if ccw:
+                    # approx 2pi / 360 rad = 1 degree
+                    angle += 0.018
+                else:
+                    angle -= 0.018
+                normalizedDeltaX = math.cos(angle)
+                normalizedDeltaY = math.sin(angle)
+                counter += 1
             selfList.append(weapon)
 
             # finally! update weapon's position
             # performance comparison:
             # using floats, 45 sec program run, time per hit, iMac: (274.7, 257.9), (332.8, 323.6), (331.1, 326.2), (366.0, 356.4), (374.9, 360.4)
             # using Decimal, 45 sec program run, TODO: do this
-            rate = random.uniform(0, scale)
-            weapon.center_x += rate * normalizedDeltaX
-            weapon.center_y += rate * normalizedDeltaY
+            rate = random.uniform(0, 3)
+            weapon.center_x += normalizedDeltaX
+            weapon.center_y += normalizedDeltaY
         
     # draws things on screen 24 times a second
     def on_draw(self):
