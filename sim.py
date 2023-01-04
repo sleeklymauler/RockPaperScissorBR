@@ -3,19 +3,12 @@ import random
 import time
 import math
 import sys
-from decimal import *
-getcontext().prec = 3
 
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
     
     # static variables
     
-    # ranges of coordinates weapons can have without going offscreen
-    minX = 15
-    maxX = arcade.get_display_size()[0] - 30
-    minY = 50
-    maxY = arcade.get_display_size()[1] - 20
     # used to draw circles around sprites for debugging
     overlapRadius = 0
     
@@ -50,7 +43,13 @@ class Game(arcade.Window):
     screenHeight = arcade.get_display_size()[1]
 
     # number of each type of weapon
-    WEAPON_COUNT = 20
+    WEAPON_COUNT = 30
+
+    # ranges of coordinates weapons can have without going offscreen
+    minX = 20
+    maxX = screenWidth - 20
+    minY = 70
+    maxY = screenHeight - 10
     
     # constructor
     def __init__(self):
@@ -78,15 +77,15 @@ class Game(arcade.Window):
         self.scissorList = arcade.SpriteList(use_spatial_hash = True)
 
         # create all of the weapon sprites
-        # SPRITES ARE 120 X 120 PIXELS
+        # SPRITES ARE 30 x 30 PIXELS
         for i in range(Game.WEAPON_COUNT):
             
             # rock sprites
             
             rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            rock.center_x = random.randrange(rock.minX, rock.maxX)
-            rock.center_y = random.randrange(rock.minY, rock.maxY)
+            rock.center_x = random.randrange(Game.minX + 20, Game.maxX - 20)
+            rock.center_y = random.randrange(Game.minY + 20, Game.maxY - 20)
             self.weaponList.append(rock)
             self.rockList.append(rock)
 
@@ -94,8 +93,8 @@ class Game(arcade.Window):
             
             paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            paper.center_x = random.randrange(paper.minX, paper.maxX)
-            paper.center_y = random.randrange(paper.minY, paper.maxY)
+            paper.center_x = random.randrange(Game.minX + 20, Game.maxX - 20)
+            paper.center_y = random.randrange(Game.minY + 20, Game.maxY - 20)
             self.weaponList.append(paper)
             self.paperList.append(paper)
 
@@ -103,20 +102,20 @@ class Game(arcade.Window):
             
             scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            scissor.center_x = random.randrange(scissor.minX, scissor.maxX)
-            scissor.center_y = random.randrange(scissor.minY, scissor.maxY)
+            scissor.center_x = random.randrange(Game.minX + 20, Game.maxX - 20)
+            scissor.center_y = random.randrange(Game.minY + 20, Game.maxY - 20)
             self.weaponList.append(scissor)
             self.scissorList.append(scissor)
         
         # set up walls
         self.wallList = arcade.SpriteList()
-        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.screenHeight)
+        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.maxY)
         self.wallList.append(topWall)
-        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = 30)
+        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.minY)
         self.wallList.append(bottomWall)
-        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = 3, center_y = Game.screenHeight / 2)
+        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.minX, center_y = Game.screenHeight / 2)
         self.wallList.append(leftWall)
-        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.screenWidth - 10, center_y = Game.screenHeight / 2)
+        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.maxX, center_y = Game.screenHeight / 2)
         self.wallList.append(rightWall)
     
     # the following 3 functions handle collisions between different weapons
@@ -262,37 +261,26 @@ class Game(arcade.Window):
             # using components of velocity vector, calculate angle w.r.t. positive x-axis
             angle = math.atan2(deltaY, deltaX)
             
-            # use angle to normalize components so velocity vector has length velocity
+            # use angle to normalize components so velocity vector has length 1
             normalizedDeltaX = math.cos(angle)
             normalizedDeltaY = math.sin(angle)
             
-            # avoid collisions between weapons of the same type and with walls
-            
-            # temporarily remove the current weapon from its own weapon lists so it isn't detecting itself
-            selfList.remove(weapon)
-            # random choice whether sprites will rotate cw or ccw
-            ccw = random.randint(0, 1)
-            counter = 0
-            while (arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), selfList)\
-            or arcade.get_sprites_at_point((weapon.center_x + normalizedDeltaX, weapon.center_y + normalizedDeltaY), self.wallList))\
-            and counter < 180:
-                if ccw:
-                    # approx 2pi / 360 rad = 1 degree
-                    angle += 0.018
-                else:
-                    angle -= 0.018
-                normalizedDeltaX = math.cos(angle)
-                normalizedDeltaY = math.sin(angle)
-                counter += 1
-            selfList.append(weapon)
+            # stop weapons from running off screen 
 
+            potentialMoveX = weapon.center_x + normalizedDeltaX
+            potentialMoveY = weapon.center_y + normalizedDeltaY
+            if (potentialMoveX >= Game.maxX - 15 or potentialMoveX <= Game.minX + 15) and weapon.center_x != Game.maxX and weapon.center_x != Game.minX:
+                normalizedDeltaX = 0
+            if (potentialMoveY >= Game.maxY - 15 or potentialMoveY <= Game.minY + 15) and weapon.center_y != Game.maxY and weapon.center_y != Game.minY:
+                normalizedDeltaY = 0
+            
             # finally! update weapon's position
             # performance comparison:
             # using floats, 45 sec program run, time per hit, iMac: (274.7, 257.9), (332.8, 323.6), (331.1, 326.2), (366.0, 356.4), (374.9, 360.4)
             # using Decimal, 45 sec program run, TODO: do this
-            rate = random.uniform(0, 3)
-            weapon.center_x += normalizedDeltaX
-            weapon.center_y += normalizedDeltaY
+            rate = random.randint(1, 3)
+            weapon.center_x += rate * normalizedDeltaX
+            weapon.center_y += rate * normalizedDeltaY
         
     # draws things on screen 24 times a second
     def on_draw(self):
