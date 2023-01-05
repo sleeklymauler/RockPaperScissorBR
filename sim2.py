@@ -15,6 +15,7 @@ class Weapon(arcade.Sprite):
         super().__init__(filename = filename, scale = scale, hit_box_algorithm = hit_box_algorithm)
         
         self.type = type
+        self.stasisListFrames = 0
     
     # called when the Game class updates
     def on_update(self, delta_time):
@@ -105,8 +106,9 @@ class Game(arcade.Window):
             self.weaponList.append(scissor)
             self.scissorList.append(scissor)
 
-        # set up updateList
+        # set up status lists
         self.updateList = [weapon for weapon in self.weaponList]
+        self.stasisList = []
         
         # set up walls
         self.wallList = arcade.SpriteList()
@@ -123,8 +125,7 @@ class Game(arcade.Window):
     # update weapons as they collide with each other in a random order
     def resolveWeaponCollisions(self):
         # the following 3 functions handle collisions between different weapons
-        #######################################################################
-    
+        #################################################################################################################################
         # iterate through paperList, detect collisions with rocks and resolve them
         def paperRockCollision(self):
             for paper in self.paperList:
@@ -135,6 +136,7 @@ class Game(arcade.Window):
                         newPaper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
                         newPaper.center_x = rock.center_x
                         newPaper.center_y = rock.center_y
+                        self.updateList.append(newPaper)
 
                         # update sprite lists
                         self.paperList.append(newPaper)
@@ -152,6 +154,7 @@ class Game(arcade.Window):
                         newRock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
                         newRock.center_x = scissor.center_x
                         newRock.center_y = scissor.center_y
+                        self.updateList.append(newRock)
 
                         # update sprite lists
                         self.rockList.append(newRock)
@@ -169,13 +172,14 @@ class Game(arcade.Window):
                         newScissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
                         newScissor.center_x = paper.center_x
                         newScissor.center_y = paper.center_y
+                        self.updateList.append(newScissor)
 
                         # update sprite lists
                         self.scissorList.append(newScissor)
                         self.weaponList.append(newScissor)
                         paper.remove_from_sprite_lists()
                         del paper
-        #######################################################################
+        #################################################################################################################################
 
         # handle collisions in a random order to keep it fair
         order = random.randint(1, 6)
@@ -269,6 +273,28 @@ class Game(arcade.Window):
         self.weaponList.shuffle()
 
         self.weaponList.on_update(delta_time = 1 / 24)
+
+    # prevent sprites from going offscreen
+    def resolveWallCollisions(self):
+        for weapon in self.updateList:
+            potentialMoveX = weapon.center_x + weapon.change_x
+            potentialMoveY = weapon.center_y + weapon.change_y
+            if potentialMoveX >= Game.maxX - 15 or potentialMoveX <= Game.minX + 15\
+            or potentialMoveY >= Game.maxY - 15 or potentialMoveY <= Game.minY + 15:
+                weapon.change_x *= -1
+                weapon.change_y *= -1
+                self.updateList.remove(weapon)
+                self.stasisList.append(weapon)
+                weapon.stasisListFrames += 0
+
+    def updateStatusLists(self):
+        for weapon in self.stasisList:
+            if weapon.stasisListFrames > 24:
+                self.stasisList.remove(weapon)
+                self.updateList.append(weapon)
+                weapon.stasisListFrames = 0
+            else:
+                weapon.stasisListFrames += 1
         
     # draws things on screen 24 times a second
     def on_draw(self):
@@ -281,13 +307,12 @@ class Game(arcade.Window):
 
     # updates values 24 times a second
     def on_update(self, delta_time = 1 / 24):
+        # TODO: consolidate all the for each weapon loops?
         Game.resolveWeaponCollisions(self)
-        # resolve wallCollisions()
-            # update reflection velocities
-            # add to stasisList / remove from updateList
         Game.updateWeaponVelocities(self)
+        Game.resolveWallCollisions(self)
         Game.moveWeapons(self)
-        # update updateList and stasisList
+        Game.updateStatusLists(self)
 
 def main():
     # create game window
