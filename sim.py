@@ -296,12 +296,16 @@ class Game(arcade.Window):
     def resolveWallCollisions(self, weapon):
         potentialMoveX = weapon.center_x + weapon.change_x
         potentialMoveY = weapon.center_y + weapon.change_y
+        resolved = False
         # wall boundaries
-        if potentialMoveX >= Game.maxX - 15 or potentialMoveX <= Game.minX + 15\
-        or potentialMoveY >= Game.maxY - 15 or potentialMoveY <= Game.minY + 15:
-            # reverse their current velocity vector
-            weapon.change_x *= -1
+        if potentialMoveX >= Game.maxX - 15 or potentialMoveX <= Game.minX + 15:
+            # reverse x component
+            weapon.change_x *= -1    
+            resolved = True
+        if potentialMoveY >= Game.maxY - 15 or potentialMoveY <= Game.minY + 15:
+            # reverse y component
             weapon.change_y *= -1
+        if resolved:
             # don't update this reversed velocity vector for a bit
             weapon.stasisListMax = random.randint(24, 72)
             if weapon in self.updateList:
