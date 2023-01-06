@@ -3,7 +3,11 @@ import random
 import math
 import sys
 
-# TODO: detect when a weapon has won
+# Globals
+
+# storing height and width of screen
+screenWidth = arcade.get_display_size()[0]
+screenHeight = arcade.get_display_size()[1]
 
 # extend the Sprite class for the rock, paper, and scissor icons
 class Weapon(arcade.Sprite):
@@ -21,17 +25,13 @@ class Weapon(arcade.Sprite):
     
     # called when SpriteList.on_update() is called
     def on_update(self, delta_time):
-        rate = random.uniform(0.5, 3)
+        rate = random.uniform(0.5, 1.5)
         self.center_x += rate * self.change_x
         self.center_y += rate * self.change_y
 
-# extend arcade's built in Window class
-class Game(arcade.Window):
+# view for when game is running
+class GameView(arcade.View):
     # static variables
-    
-    # storing height and width of screen
-    screenWidth = arcade.get_display_size()[0]
-    screenHeight = arcade.get_display_size()[1]
 
     # ranges of coordinates weapons can have without going offscreen
     minX = 20
@@ -44,8 +44,8 @@ class Game(arcade.Window):
 
     # constructor
     def __init__(self):
-        # call the Window class's constructor
-        super().__init__(width = Game.screenWidth, height = Game.screenHeight, title = "Example", update_rate = 1 / 24)
+        # call the View class's constructor
+        super().__init__()
 
         # declare the sprite lists
         
@@ -77,13 +77,13 @@ class Game(arcade.Window):
 
         # create all of the weapon sprites
         # SPRITES ARE 30 x 30 PIXELS
-        for i in range(Game.WEAPON_COUNT):
+        for i in range(GameView.WEAPON_COUNT):
             # rock sprites
             
             rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            rock.center_x = random.randrange(Game.minX + 20, Game.maxX - 20)
-            rock.center_y = random.randrange(Game.minY + 20, Game.maxY - 20)
+            rock.center_x = random.randrange(GameView.minX + 20, GameView.maxX - 20)
+            rock.center_y = random.randrange(GameView.minY + 20, GameView.maxY - 20)
             self.weaponList.append(rock)
             self.rockList.append(rock)
 
@@ -91,8 +91,8 @@ class Game(arcade.Window):
             
             paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            paper.center_x = random.randrange(Game.minX + 20, Game.maxX - 20)
-            paper.center_y = random.randrange(Game.minY + 20, Game.maxY - 20)
+            paper.center_x = random.randrange(GameView.minX + 20, GameView.maxX - 20)
+            paper.center_y = random.randrange(GameView.minY + 20, GameView.maxY - 20)
             self.weaponList.append(paper)
             self.paperList.append(paper)
 
@@ -100,8 +100,8 @@ class Game(arcade.Window):
             
             scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            scissor.center_x = random.randrange(Game.minX + 20, Game.maxX - 20)
-            scissor.center_y = random.randrange(Game.minY + 20, Game.maxY - 20)
+            scissor.center_x = random.randrange(GameView.minX + 20, GameView.maxX - 20)
+            scissor.center_y = random.randrange(GameView.minY + 20, GameView.maxY - 20)
             self.weaponList.append(scissor)
             self.scissorList.append(scissor)
 
@@ -111,13 +111,13 @@ class Game(arcade.Window):
         
         # set up walls
         self.wallList = arcade.SpriteList()
-        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.maxY)
+        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = screenWidth, image_height = 5, center_x = screenWidth / 2, center_y = GameView.maxY)
         self.wallList.append(topWall)
-        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = Game.screenWidth, image_height = 5, center_x = Game.screenWidth / 2, center_y = Game.minY)
+        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = screenWidth, image_height = 5, center_x = screenWidth / 2, center_y = GameView.minY)
         self.wallList.append(bottomWall)
-        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.minX, center_y = Game.screenHeight / 2)
+        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = screenHeight, center_x = GameView.minX, center_y = screenHeight / 2)
         self.wallList.append(leftWall)
-        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = Game.screenHeight, center_x = Game.maxX, center_y = Game.screenHeight / 2)
+        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = screenHeight, center_x = GameView.maxX, center_y = screenHeight / 2)
         self.wallList.append(rightWall)
     
     
@@ -279,7 +279,7 @@ class Game(arcade.Window):
                 weapon.change_y = math.sin(angle)
 
                 # stop weapons from running offscreen
-                Game.resolveWallCollisions(self, weapon)
+                GameView.resolveWallCollisions(self, weapon)
 
                 # randomly pick some weapons to not update their velocities the next frame
                 # increases performance and helps stop weapons of the same type from clumping up
@@ -290,7 +290,7 @@ class Game(arcade.Window):
                     weapon.stasisListMax = random.randint(12, 96)
             # weapons that don't get their velocities updated this frame still can't go offscreen
             else:
-                Game.resolveWallCollisions(self, weapon)
+                GameView.resolveWallCollisions(self, weapon)
 
     # prevent sprites from going offscreen
     def resolveWallCollisions(self, weapon):
@@ -298,11 +298,11 @@ class Game(arcade.Window):
         potentialMoveY = weapon.center_y + weapon.change_y
         resolved = False
         # wall boundaries
-        if potentialMoveX >= Game.maxX - 15 or potentialMoveX <= Game.minX + 15:
+        if potentialMoveX >= GameView.maxX - 15 or potentialMoveX <= GameView.minX + 15:
             # reverse x component
             weapon.change_x *= -1    
             resolved = True
-        if potentialMoveY >= Game.maxY - 15 or potentialMoveY <= Game.minY + 15:
+        if potentialMoveY >= GameView.maxY - 15 or potentialMoveY <= GameView.minY + 15:
             # reverse y component
             weapon.change_y *= -1
         if resolved:
@@ -341,18 +341,37 @@ class Game(arcade.Window):
         self.wallList.draw()
 
     # updates values 24 times a second
-    def on_update(self, delta_time = 1 / 24):
-        Game.resolveWeaponCollisions(self)
-        Game.updateWeaponVelocities(self)
-        Game.moveWeapons(self)
-        Game.updateStatusLists(self)
+    def on_update(self, delta_time = 1 / 60):
+        GameView.resolveWeaponCollisions(self)
+        GameView.updateWeaponVelocities(self)
+        GameView.moveWeapons(self)
+        GameView.updateStatusLists(self)
+
+# "menu" screen before game starts
+class StartView(arcade.View):
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.WHITE)
+
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text(text = "Click to start", start_x = screenWidth / 2, start_y = screenHeight / 2,\
+            color = arcade.color.BLACK, font_size = 50, anchor_x = "center")
+
+    # start the game when the user clicks the mouse
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+# TODO: add game over view, need to clean up all of our objects in memory when the game ends
 
 def main():
     # create game window
-    window = Game()
-    
-    # run game setup
-    window.setup()
+    window = arcade.Window(screenWidth, screenHeight, "RockPaperScissorsBR")
+
+    # starting view is the game itself
+    start_view = StartView()
+    window.show_view(start_view)
     
     # keep window open until user closes it
     arcade.run()
