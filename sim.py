@@ -305,6 +305,7 @@ class GameView(arcade.View):
         if potentialMoveY >= GameView.maxY - 15 or potentialMoveY <= GameView.minY + 15:
             # reverse y component
             weapon.change_y *= -1
+            resolved = True
         if resolved:
             # don't update this reversed velocity vector for a bit
             weapon.stasisListMax = random.randint(24, 72)
@@ -330,6 +331,27 @@ class GameView(arcade.View):
                 weapon.stasisListCount = 0
             else:
                 weapon.stasisListCount += 1
+
+    # see if a weapon team has won
+    def checkGameOver(self):
+        count = 0
+        if len(self.rockList) == 0:
+            count += 1
+        if len(self.paperList) == 0:
+            count += 1
+        if len(self.scissorList) == 0:
+            count += 1
+        if count >= 2:
+            view = GameOverView()
+            self.window.show_view(view)
+            GameView.cleanUp(self)
+    
+    # free up memory for the next game
+    def cleanUp(self):
+        for weapon in self.weaponList:
+            del weapon
+        for wall in self.wallList:
+            del wall
         
     # draws things on screen 24 times a second
     def on_draw(self):
@@ -346,7 +368,8 @@ class GameView(arcade.View):
         GameView.updateWeaponVelocities(self)
         GameView.moveWeapons(self)
         GameView.updateStatusLists(self)
-
+        GameView.checkGameOver(self)
+    
 # "menu" screen before game starts
 class StartView(arcade.View):
     def on_show_view(self):
@@ -362,6 +385,22 @@ class StartView(arcade.View):
         game_view = GameView()
         game_view.setup()
         self.window.show_view(game_view)
+
+# displayed when one side wins
+class GameOverView(arcade.View):
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.WHITE)
+    
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text(text = "Game over! Click to restart", start_x = screenWidth / 2, start_y = screenHeight / 2,\
+            color = arcade.color.BLACK, font_size = 50, anchor_x = "center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        game_view.setup()
+        self.window.show_view(game_view)
+
 
 # TODO: add game over view, need to clean up all of our objects in memory when the game ends
 
