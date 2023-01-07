@@ -2,6 +2,11 @@ import arcade
 import random
 import math
 import sys
+import os
+
+# needed for compiling to .exe with PyInstaller
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    os.chdir(sys._MEIPASS)
 
 # Globals
 
