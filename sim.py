@@ -47,19 +47,18 @@ class GameWindow(arcade.Window):
         self.manager.enable()
 
         # display start view
-        startView = StartView(self.manager, self)
+        startView = StartView(self.manager)
         GameWindow.show_view(self, startView)
 
 # "menu" screen before game starts
 class StartView(arcade.View):
     # constructor
-    def __init__(self, uiManager, window):
+    def __init__(self, uiManager):
         # call arcade.View constructor
         super().__init__()
 
-        # store references to GameWindow's UIManager and GameWindow itself
+        # store references to GameWindow's UIManager
         self.manager = uiManager
-        self.game_window = window
         
         # remove any widgets that might already exist
         self.manager.clear()
@@ -95,7 +94,7 @@ class StartView(arcade.View):
 
     # start the game
     def on_start_button_click(self, event):
-        playView = PlayView(self.manager, self.game_window)
+        playView = PlayView(self.manager)
         playView.setup()
         self.window.show_view(playView)    
 
@@ -113,13 +112,12 @@ class PlayView(arcade.View):
     WEAPON_COUNT = 30
 
     # constructor
-    def __init__(self, uiManager, window):
+    def __init__(self, uiManager):
         # call the View class's constructor
         super().__init__()
 
-        # store references to GameWindow's UIManager and GameWindow itself
+        # store references to GameWindow's UIManager
         self.manager = uiManager
-        self.game_window = window
 
         # declare the sprite lists
         
@@ -416,9 +414,9 @@ class PlayView(arcade.View):
         if len(self.scissorList) == 0:
             count += 1
         if count >= 2:
-            endView = EndView(self.manager, self.window)
+            endView = EndView(self.manager)
             PlayView.cleanUp(self)
-            self.game_window.show_view(endView)
+            self.window.show_view(endView)
             
     
     # free up memory for the next game
@@ -445,16 +443,42 @@ class PlayView(arcade.View):
         PlayView.updateStatusLists(self)
         PlayView.checkGameOver(self)
 
+    def on_key_press(self, key, _modifiers):
+        if key == arcade.key.ESCAPE:
+            pauseView = PauseView(self)
+            self.window.show_view(pauseView)
+
+# for pausing the game
+class PauseView(arcade.View):
+    # constructor
+    def __init__(self, gameView):
+        # call arcade.View constructor
+        super().__init__()
+        self.gameView = gameView
+
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.WHITE)
+    
+    def on_draw(self):
+        self.clear()
+        weaponList = self.gameView.weaponList
+        wallList = self.gameView.wallList
+        weaponList.draw()
+        wallList.draw()
+    
+    def on_key_press(self, key, _modifiers):
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.gameView)
+
 # displayed when one side wins
 class EndView(arcade.View):
     # constructor
-    def __init__(self, uiManager, window):
+    def __init__(self, uiManager):
         # call arcade.View constructor
         super().__init__()
 
-        # store references to GameWindow's UIManager and GameWindow itself
+        # store references to GameWindow's UIManager
         self.manager = uiManager
-        self.game_window = window
 
         # remove previous widgets from UIManager
         self.manager.clear()
@@ -477,7 +501,7 @@ class EndView(arcade.View):
         )
 
     def on_menu_button_click(self, event):
-        startView = StartView(self.manager, self.window)
+        startView = StartView(self.manager)
         self.window.show_view(startView) 
 
     def on_show_view(self):
@@ -488,9 +512,6 @@ class EndView(arcade.View):
         self.manager.draw()
         # arcade.draw_text(text = "Game over! Click to restart", start_x = screenWidth / 2, start_y = screenHeight / 2,\
         #     color = arcade.color.BLACK, font_size = 50, anchor_x = "center")
-
-
-# TODO: add game over view, need to clean up all of our objects in memory when the game ends
 
 def main():
     # create game window
