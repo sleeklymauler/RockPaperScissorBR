@@ -453,30 +453,36 @@ class PlayView(arcade.View):
 
     def on_key_press(self, key, _modifiers):
         if key == arcade.key.ESCAPE:
-            pauseView = PauseView(self)
+            pauseView = PauseView(self.manager, self)
             self.window.show_view(pauseView)
 
 # for pausing the game
 class PauseView(arcade.View):
     # constructor
-    def __init__(self, gameView):
+    def __init__(self, uiManager, playView):
         # call arcade.View constructor
         super().__init__()
-        self.gameView = gameView
+        self.manager = uiManager
+        self.playView = playView
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.WHITE)
     
     def on_draw(self):
         self.clear()
-        weaponList = self.gameView.weaponList
-        wallList = self.gameView.wallList
+        weaponList = self.playView.weaponList
+        wallList = self.playView.wallList
         weaponList.draw()
         wallList.draw()
     
     def on_key_press(self, key, _modifiers):
         if key == arcade.key.ESCAPE:
-            self.window.show_view(self.gameView)
+            self.window.show_view(self.playView)
+        elif key == arcade.key.SPACE:
+            self.playView.cleanUp()
+            newPlayView = PlayView(self.manager)
+            newPlayView.setup()
+            self.window.show_view(newPlayView)
 
 # displayed when one side wins
 class EndView(arcade.View):
