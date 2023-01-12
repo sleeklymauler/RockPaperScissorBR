@@ -71,6 +71,11 @@ class StartView(arcade.View):
         startButton.on_click = self.on_start_button_click
         self.vBox.add(startButton.with_space_around(bottom = 20))
 
+        # settings button
+        settingsButton = arcade.gui.UIFlatButton(text = "Settings", width = 200)
+        settingsButton.on_click = self.on_settings_button_click
+        self.vBox.add(settingsButton.with_space_around(bottom = 20))
+
         # quit button
         quitButton = arcade.gui.UIFlatButton(text = "Quit", width = 200)
         quitButton.on_click = self.on_quit_button_click
@@ -101,7 +106,11 @@ class StartView(arcade.View):
     def on_start_button_click(self, event):
         playView = PlayView(self.manager)
         playView.setup()
-        self.window.show_view(playView)    
+        self.window.show_view(playView)  
+
+    def on_settings_button_click(self, event):
+        settingsView = SettingsView(self.manager)
+        self.window.show_view(settingsView)  
 
     def on_quit_button_click(self, event):
         arcade.exit()
@@ -455,6 +464,40 @@ class PlayView(arcade.View):
         if key == arcade.key.ESCAPE:
             pauseView = PauseView(self.manager, self)
             self.window.show_view(pauseView)
+
+class SettingsView(arcade.View):
+    # constructor
+    def __init__(self, uiManager):
+        # call arcade.View constructor
+        super().__init__()
+        self.manager = uiManager
+        self.manager.clear()
+
+        self.vBox = arcade.gui.UIBoxLayout()
+
+        weaponNumberInput = arcade.gui.UIInputText()
+        self.vBox.add(weaponNumberInput)
+
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x = "center_x",
+                anchor_y = "center_y",
+                child = self.vBox
+            )
+        )
+
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.WHITE)
+
+    def on_draw(self):
+        self.clear()
+        self.manager.draw()
+        # settings to change
+        # number of weapons
+        # size of weapons(?)
+        # weapon speed
+        # prioritize chasing, running, or both
+        # chance weapon gets added to stasisList(?)
 
 # for pausing the game
 class PauseView(arcade.View):
