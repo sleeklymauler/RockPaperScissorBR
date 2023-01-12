@@ -69,7 +69,12 @@ class StartView(arcade.View):
         # start button
         startButton = arcade.gui.UIFlatButton(text = "Start Game", width = 200)
         startButton.on_click = self.on_start_button_click
-        self.vBox.add(startButton)
+        self.vBox.add(startButton.with_space_around(bottom = 20))
+
+        # quit button
+        quitButton = arcade.gui.UIFlatButton(text = "Quit", width = 200)
+        quitButton.on_click = self.on_quit_button_click
+        self.vBox.add(quitButton.with_space_around(bottom = 20))
 
         # widget to hold vertical BoxGroup
         self.manager.add(
@@ -97,6 +102,9 @@ class StartView(arcade.View):
         playView = PlayView(self.manager)
         playView.setup()
         self.window.show_view(playView)    
+
+    def on_quit_button_click(self, event):
+        arcade.exit()
 
 # view for when game is running
 class PlayView(arcade.View):
@@ -426,16 +434,16 @@ class PlayView(arcade.View):
         for wall in self.wallList:
             del wall
         
-    # draws things on screen 24 times a second
+    # draws things on screen 60 times a second
     def on_draw(self):
         # ready to draw
-        arcade.start_render()
+        self.window.clear()
         
         # draw all of the sprites
         self.weaponList.draw()
         self.wallList.draw()
 
-    # updates values 24 times a second
+    # updates values 60 times a second
     def on_update(self, delta_time = 1 / 60):
         PlayView.resolveWeaponCollisions(self)
         PlayView.updateWeaponVelocities(self)
@@ -489,7 +497,12 @@ class EndView(arcade.View):
         # return to menu button
         menuButton = arcade.gui.UIFlatButton(text = "Return To Menu", width = 200)
         menuButton.on_click = self.on_menu_button_click
-        self.vBox.add(menuButton)
+        self.vBox.add(menuButton.with_space_around(bottom = 20))
+
+        # quit button
+        quitButton = arcade.gui.UIFlatButton(text = "Quit", width = 200)
+        quitButton.on_click = self.on_quit_button_click
+        self.vBox.add(quitButton.with_space_around(bottom = 20))
 
         # widget to hold vertical BoxGroup
         self.manager.add(
@@ -503,6 +516,9 @@ class EndView(arcade.View):
     def on_menu_button_click(self, event):
         startView = StartView(self.manager)
         self.window.show_view(startView) 
+
+    def on_quit_button_click(self, event):
+        arcade.exit()
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.WHITE)
@@ -524,5 +540,6 @@ def main():
     # keep window open until user closes it
     arcade.run()
 
-main()
+if __name__ == "__main__":
+    main()
         
