@@ -483,6 +483,8 @@ class PauseView(arcade.View):
             newPlayView = PlayView(self.manager)
             newPlayView.setup()
             self.window.show_view(newPlayView)
+        elif key == arcade.key.ENTER:
+            arcade.exit()
 
 # displayed when one side wins
 class EndView(arcade.View):

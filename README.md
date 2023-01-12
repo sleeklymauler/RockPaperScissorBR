@@ -8,11 +8,11 @@ Built with [Python Arcade](https://api.arcade.academy/en/latest/#)
 
 # Features
 
-- Start and game over screens
-- Decently optimized
+- Somewhat optimized
 - Hypnotizing to watch
+- Excellent time-waster
 
-# Usage
+# Running
 
 ## Windows
 
@@ -24,6 +24,14 @@ If you're not on Windows (or you don't trust the executable) you can clone the r
 
 ### Dependencies
 - [Python Arcade](https://api.arcade.academy/en/latest/install/index.html)
+
+# How To Use
+- Click "Start Game" to start a new round
+- Press the escape key to pause
+- While paused, you can:
+  - Press escape again to unpause
+  - Press space to restart
+  - Press enter to exit
 
 # Possible Future Additions
 - Settings screen to change number of weapons, weapon speed, weapon size, etc.
