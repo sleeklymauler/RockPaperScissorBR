@@ -1,4 +1,5 @@
 import arcade
+import arcade.gui
 import random
 import math
 import sys
@@ -34,8 +35,72 @@ class Weapon(arcade.Sprite):
         self.center_x += rate * self.change_x
         self.center_y += rate * self.change_y
 
+# extends arcade.Window
+class GameWindow(arcade.Window):
+    # constructor
+    def __init__(self):
+        # call arcade.Window constructor
+        super().__init__(screenWidth, screenHeight, "RockPaperScissorsBR")
+
+        # UI manager only works in the Window class
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # display start view
+        startView = StartView(self.manager, self)
+        GameWindow.show_view(self, startView)
+
+# "menu" screen before game starts
+class StartView(arcade.View):
+    # constructor
+    def __init__(self, uiManager, window):
+        # call arcade.View constructor
+        super().__init__()
+
+        # store references to GameWindow's UIManager and GameWindow itself
+        self.manager = uiManager
+        self.game_window = window
+        
+        # remove any widgets that might already exist
+        self.manager.clear()
+        
+        # vertical BoxGroup to align buttons
+        self.vBox = arcade.gui.UIBoxLayout()
+
+        # start button
+        startButton = arcade.gui.UIFlatButton(text = "Start Game", width = 200)
+        startButton.on_click = self.on_start_button_click
+        self.vBox.add(startButton)
+
+        # widget to hold vertical BoxGroup
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x = "center_x",
+                anchor_y = "center_y",
+                child = self.vBox
+            )
+        )
+    
+    # when view is shown for the first time
+    def on_show_view(self):
+        # set background color
+        arcade.set_background_color(arcade.color.WHITE)
+
+    # view is drawn 60 times / s
+    def on_draw(self):
+        self.clear()
+        
+        # draw the ui elements (buttons)
+        self.manager.draw()
+
+    # start the game
+    def on_start_button_click(self, event):
+        playView = PlayView(self.manager, self.game_window)
+        playView.setup()
+        self.window.show_view(playView)    
+
 # view for when game is running
-class GameView(arcade.View):
+class PlayView(arcade.View):
     # static variables
 
     # ranges of coordinates weapons can have without going offscreen
@@ -48,9 +113,13 @@ class GameView(arcade.View):
     WEAPON_COUNT = 30
 
     # constructor
-    def __init__(self):
+    def __init__(self, uiManager, window):
         # call the View class's constructor
         super().__init__()
+
+        # store references to GameWindow's UIManager and GameWindow itself
+        self.manager = uiManager
+        self.game_window = window
 
         # declare the sprite lists
         
@@ -82,13 +151,13 @@ class GameView(arcade.View):
 
         # create all of the weapon sprites
         # SPRITES ARE 30 x 30 PIXELS
-        for i in range(GameView.WEAPON_COUNT):
+        for i in range(PlayView.WEAPON_COUNT):
             # rock sprites
             
             rock = Weapon(filename = "Sprites/rock.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "rock")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            rock.center_x = random.randrange(GameView.minX + 20, GameView.maxX - 20)
-            rock.center_y = random.randrange(GameView.minY + 20, GameView.maxY - 20)
+            rock.center_x = random.randrange(PlayView.minX + 20, PlayView.maxX - 20)
+            rock.center_y = random.randrange(PlayView.minY + 20, PlayView.maxY - 20)
             self.weaponList.append(rock)
             self.rockList.append(rock)
 
@@ -96,8 +165,8 @@ class GameView(arcade.View):
             
             paper = Weapon(filename = "Sprites/paper.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "paper")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            paper.center_x = random.randrange(GameView.minX + 20, GameView.maxX - 20)
-            paper.center_y = random.randrange(GameView.minY + 20, GameView.maxY - 20)
+            paper.center_x = random.randrange(PlayView.minX + 20, PlayView.maxX - 20)
+            paper.center_y = random.randrange(PlayView.minY + 20, PlayView.maxY - 20)
             self.weaponList.append(paper)
             self.paperList.append(paper)
 
@@ -105,8 +174,8 @@ class GameView(arcade.View):
             
             scissor = Weapon(filename = "Sprites/scissors.png", scale = 0.25, hit_box_algorithm = "Detailed", type = "scissor")
             # set position on screen to be random, adjust so the entire sprite is on the screen
-            scissor.center_x = random.randrange(GameView.minX + 20, GameView.maxX - 20)
-            scissor.center_y = random.randrange(GameView.minY + 20, GameView.maxY - 20)
+            scissor.center_x = random.randrange(PlayView.minX + 20, PlayView.maxX - 20)
+            scissor.center_y = random.randrange(PlayView.minY + 20, PlayView.maxY - 20)
             self.weaponList.append(scissor)
             self.scissorList.append(scissor)
 
@@ -116,13 +185,13 @@ class GameView(arcade.View):
         
         # set up walls
         self.wallList = arcade.SpriteList()
-        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = screenWidth, image_height = 5, center_x = screenWidth / 2, center_y = GameView.maxY)
+        topWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = screenWidth, image_height = 5, center_x = screenWidth / 2, center_y = PlayView.maxY)
         self.wallList.append(topWall)
-        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = screenWidth, image_height = 5, center_x = screenWidth / 2, center_y = GameView.minY)
+        bottomWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = screenWidth, image_height = 5, center_x = screenWidth / 2, center_y = PlayView.minY)
         self.wallList.append(bottomWall)
-        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = screenHeight, center_x = GameView.minX, center_y = screenHeight / 2)
+        leftWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = screenHeight, center_x = PlayView.minX, center_y = screenHeight / 2)
         self.wallList.append(leftWall)
-        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = screenHeight, center_x = GameView.maxX, center_y = screenHeight / 2)
+        rightWall = arcade.Sprite(filename = "Sprites/wall.png", image_width = 5, image_height = screenHeight, center_x = PlayView.maxX, center_y = screenHeight / 2)
         self.wallList.append(rightWall)
     
     
@@ -284,7 +353,7 @@ class GameView(arcade.View):
                 weapon.change_y = math.sin(angle)
 
                 # stop weapons from running offscreen
-                GameView.resolveWallCollisions(self, weapon)
+                PlayView.resolveWallCollisions(self, weapon)
 
                 # randomly pick some weapons to not update their velocities the next frame
                 # increases performance and helps stop weapons of the same type from clumping up
@@ -295,7 +364,7 @@ class GameView(arcade.View):
                     weapon.stasisListMax = random.randint(12, 96)
             # weapons that don't get their velocities updated this frame still can't go offscreen
             else:
-                GameView.resolveWallCollisions(self, weapon)
+                PlayView.resolveWallCollisions(self, weapon)
 
     # prevent sprites from going offscreen
     def resolveWallCollisions(self, weapon):
@@ -303,11 +372,11 @@ class GameView(arcade.View):
         potentialMoveY = weapon.center_y + weapon.change_y
         resolved = False
         # wall boundaries
-        if potentialMoveX >= GameView.maxX - 15 or potentialMoveX <= GameView.minX + 15:
+        if potentialMoveX >= PlayView.maxX - 15 or potentialMoveX <= PlayView.minX + 15:
             # reverse x component
             weapon.change_x *= -1    
             resolved = True
-        if potentialMoveY >= GameView.maxY - 15 or potentialMoveY <= GameView.minY + 15:
+        if potentialMoveY >= PlayView.maxY - 15 or potentialMoveY <= PlayView.minY + 15:
             # reverse y component
             weapon.change_y *= -1
             resolved = True
@@ -347,9 +416,10 @@ class GameView(arcade.View):
         if len(self.scissorList) == 0:
             count += 1
         if count >= 2:
-            view = GameOverView()
-            self.window.show_view(view)
-            GameView.cleanUp(self)
+            endView = EndView(self.manager, self.window)
+            PlayView.cleanUp(self)
+            self.game_window.show_view(endView)
+            
     
     # free up memory for the next game
     def cleanUp(self):
@@ -369,53 +439,66 @@ class GameView(arcade.View):
 
     # updates values 24 times a second
     def on_update(self, delta_time = 1 / 60):
-        GameView.resolveWeaponCollisions(self)
-        GameView.updateWeaponVelocities(self)
-        GameView.moveWeapons(self)
-        GameView.updateStatusLists(self)
-        GameView.checkGameOver(self)
-    
-# "menu" screen before game starts
-class StartView(arcade.View):
-    def on_show_view(self):
-        arcade.set_background_color(arcade.color.WHITE)
-
-    def on_draw(self):
-        self.clear()
-        arcade.draw_text(text = "Click to start", start_x = screenWidth / 2, start_y = screenHeight / 2,\
-            color = arcade.color.BLACK, font_size = 50, anchor_x = "center")
-
-    # start the game when the user clicks the mouse
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        game_view = GameView()
-        game_view.setup()
-        self.window.show_view(game_view)
+        PlayView.resolveWeaponCollisions(self)
+        PlayView.updateWeaponVelocities(self)
+        PlayView.moveWeapons(self)
+        PlayView.updateStatusLists(self)
+        PlayView.checkGameOver(self)
 
 # displayed when one side wins
-class GameOverView(arcade.View):
+class EndView(arcade.View):
+    # constructor
+    def __init__(self, uiManager, window):
+        # call arcade.View constructor
+        super().__init__()
+
+        # store references to GameWindow's UIManager and GameWindow itself
+        self.manager = uiManager
+        self.game_window = window
+
+        # remove previous widgets from UIManager
+        self.manager.clear()
+
+        # vertical BoxGroup to align buttons
+        self.vBox = arcade.gui.UIBoxLayout()
+
+        # return to menu button
+        menuButton = arcade.gui.UIFlatButton(text = "Return To Menu", width = 200)
+        menuButton.on_click = self.on_menu_button_click
+        self.vBox.add(menuButton)
+
+        # widget to hold vertical BoxGroup
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x = "center_x",
+                anchor_y = "center_y",
+                child = self.vBox
+            )
+        )
+
+    def on_menu_button_click(self, event):
+        startView = StartView(self.manager, self.window)
+        self.window.show_view(startView) 
+
     def on_show_view(self):
         arcade.set_background_color(arcade.color.WHITE)
     
     def on_draw(self):
         self.clear()
-        arcade.draw_text(text = "Game over! Click to restart", start_x = screenWidth / 2, start_y = screenHeight / 2,\
-            color = arcade.color.BLACK, font_size = 50, anchor_x = "center")
-
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        game_view = GameView()
-        game_view.setup()
-        self.window.show_view(game_view)
+        self.manager.draw()
+        # arcade.draw_text(text = "Game over! Click to restart", start_x = screenWidth / 2, start_y = screenHeight / 2,\
+        #     color = arcade.color.BLACK, font_size = 50, anchor_x = "center")
 
 
 # TODO: add game over view, need to clean up all of our objects in memory when the game ends
 
 def main():
     # create game window
-    window = arcade.Window(screenWidth, screenHeight, "RockPaperScissorsBR")
+    window = GameWindow()
 
     # starting view is the game itself
-    start_view = StartView()
-    window.show_view(start_view)
+    # start_view = StartView()
+    # window.show_view(start_view)
     
     # keep window open until user closes it
     arcade.run()
